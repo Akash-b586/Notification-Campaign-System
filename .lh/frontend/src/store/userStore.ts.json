@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/store/userStore.ts",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354041,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354041,
+            "name": "Commit-0",
+            "content": "import { create } from 'zustand';\r\nimport type { User, UserFilters } from '../types';\r\n\r\ninterface UserState {\r\n  users: User[];\r\n  selectedUser: User | null;\r\n  filters: UserFilters;\r\n  isLoading: boolean;\r\n  \r\n  // Actions\r\n  setUsers: (users: User[]) => void;\r\n  addUser: (user: User) => void;\r\n  updateUser: (userId: string, data: Partial<User>) => void;\r\n  deleteUser: (userId: string) => void;\r\n  setSelectedUser: (user: User | null) => void;\r\n  setFilters: (filters: Partial<UserFilters>) => void;\r\n  setLoading: (loading: boolean) => void;\r\n  getFilteredUsers: () => User[];\r\n}\r\n\r\nexport const useUserStore = create<UserState>((set, get) => ({\r\n  users: [],\r\n  selectedUser: null,\r\n  filters: {},\r\n  isLoading: false,\r\n\r\n  setUsers: (users: User[]) => {\r\n    set({ users });\r\n  },\r\n\r\n  addUser: (user: User) => {\r\n    set((state) => ({ users: [...state.users, user] }));\r\n  },\r\n\r\n  updateUser: (userId: string, data: Partial<User>) => {\r\n    set((state) => ({\r\n      users: state.users.map((user) =>\r\n        user.user_id === userId ? { ...user, ...data } : user\r\n      ),\r\n    }));\r\n  },\r\n\r\n  deleteUser: (userId: string) => {\r\n    set((state) => ({\r\n      users: state.users.filter((user) => user.user_id !== userId),\r\n    }));\r\n  },\r\n\r\n  setSelectedUser: (user: User | null) => {\r\n    set({ selectedUser: user });\r\n  },\r\n\r\n  setFilters: (filters: Partial<UserFilters>) => {\r\n    set((state) => ({ filters: { ...state.filters, ...filters } }));\r\n  },\r\n\r\n  setLoading: (loading: boolean) => {\r\n    set({ isLoading: loading });\r\n  },\r\n\r\n  getFilteredUsers: () => {\r\n    const { users, filters } = get();\r\n    let filtered = [...users];\r\n\r\n    if (filters.search) {\r\n      const search = filters.search.toLowerCase();\r\n      filtered = filtered.filter(\r\n        (user) =>\r\n          user.name.toLowerCase().includes(search) ||\r\n          user.email.toLowerCase().includes(search) ||\r\n          user.user_id.toLowerCase().includes(search)\r\n      );\r\n    }\r\n\r\n    if (filters.city) {\r\n      filtered = filtered.filter((user) => user.city === filters.city);\r\n    }\r\n\r\n    if (filters.is_active !== undefined) {\r\n      filtered = filtered.filter((user) => user.is_active === filters.is_active);\r\n    }\r\n\r\n    return filtered;\r\n  },\r\n}));\r\n"
+        }
+    ]
+}

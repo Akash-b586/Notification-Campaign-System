@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/components/ui/Input.tsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354042,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354042,
+            "name": "Commit-0",
+            "content": "import React, { forwardRef } from 'react';\r\nimport type { InputHTMLAttributes } from 'react';\r\n\r\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> {\r\n  label?: string;\r\n  error?: string;\r\n  icon?: React.ReactNode;\r\n}\r\n\r\nexport const Input = forwardRef<HTMLInputElement, InputProps>(\r\n  ({ label, error, icon, className = '', ...props }, ref) => {\r\n    return (\r\n      <div className=\"w-full\">\r\n        {label && (\r\n          <label className=\"block text-sm font-medium text-gray-700 mb-1\">\r\n            {label}\r\n          </label>\r\n        )}\r\n        <div className=\"relative\">\r\n          {icon && (\r\n            <div className=\"absolute left-3 top-1/2 -translate-y-1/2 text-gray-400\">\r\n              {icon}\r\n            </div>\r\n          )}\r\n          <input\r\n            ref={ref}\r\n            className={`input ${icon ? 'pl-10' : ''} ${error ? 'border-red-500 focus:ring-red-500' : ''} ${className}`}\r\n            {...props}\r\n          />\r\n        </div>\r\n        {error && (\r\n          <p className=\"mt-1 text-sm text-red-600\">{error}</p>\r\n        )}\r\n      </div>\r\n    );\r\n  }\r\n);\r\n\r\nInput.displayName = 'Input';\r\n"
+        }
+    ]
+}

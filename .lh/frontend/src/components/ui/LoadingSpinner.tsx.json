@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/components/ui/LoadingSpinner.tsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354059,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354059,
+            "name": "Commit-0",
+            "content": "import React from 'react';\r\nimport { Loader2 } from 'lucide-react';\r\n\r\ninterface LoadingSpinnerProps {\r\n  size?: 'sm' | 'md' | 'lg';\r\n  text?: string;\r\n  fullScreen?: boolean;\r\n}\r\n\r\nexport const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({\r\n  size = 'md',\r\n  text,\r\n  fullScreen = false,\r\n}) => {\r\n  const sizeClasses = {\r\n    sm: 'w-4 h-4',\r\n    md: 'w-8 h-8',\r\n    lg: 'w-12 h-12',\r\n  };\r\n\r\n  const content = (\r\n    <div className=\"flex flex-col items-center justify-center gap-3\">\r\n      <Loader2 className={`${sizeClasses[size]} animate-spin text-primary-600`} />\r\n      {text && <p className=\"text-gray-600 text-sm\">{text}</p>}\r\n    </div>\r\n  );\r\n\r\n  if (fullScreen) {\r\n    return (\r\n      <div className=\"fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50\">\r\n        {content}\r\n      </div>\r\n    );\r\n  }\r\n\r\n  return content;\r\n};\r\n"
+        }
+    ]
+}

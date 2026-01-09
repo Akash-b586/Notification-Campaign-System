@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/components/ui/Badge.tsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354049,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354049,
+            "name": "Commit-0",
+            "content": "import React from 'react';\r\n\r\ninterface BadgeProps {\r\n  children: React.ReactNode;\r\n  variant?: 'success' | 'warning' | 'error' | 'info' | 'draft';\r\n  className?: string;\r\n}\r\n\r\nexport const Badge: React.FC<BadgeProps> = ({\r\n  children,\r\n  variant = 'info',\r\n  className = '',\r\n}) => {\r\n  const variantClasses = {\r\n    success: 'badge-success',\r\n    warning: 'badge-warning',\r\n    error: 'badge-error',\r\n    info: 'badge-info',\r\n    draft: 'badge-draft',\r\n  };\r\n\r\n  return (\r\n    <span className={`badge ${variantClasses[variant]} ${className}`}>\r\n      {children}\r\n    </span>\r\n  );\r\n};\r\n"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/store/preferenceStore.ts",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354042,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354042,
+            "name": "Commit-0",
+            "content": "import { create } from 'zustand';\r\nimport type { NotificationPreference } from '../types';\r\n\r\ninterface PreferenceState {\r\n  preferences: Record<string, NotificationPreference>;\r\n  isLoading: boolean;\r\n  \r\n  // Actions\r\n  setPreferences: (preferences: NotificationPreference[]) => void;\r\n  updatePreference: (userId: string, data: Partial<NotificationPreference>) => void;\r\n  setLoading: (loading: boolean) => void;\r\n  getUserPreference: (userId: string) => NotificationPreference | undefined;\r\n}\r\n\r\nexport const usePreferenceStore = create<PreferenceState>((set, get) => ({\r\n  preferences: {},\r\n  isLoading: false,\r\n\r\n  setPreferences: (preferences: NotificationPreference[]) => {\r\n    const preferencesMap: Record<string, NotificationPreference> = {};\r\n    preferences.forEach((pref) => {\r\n      preferencesMap[pref.user_id] = pref;\r\n    });\r\n    set({ preferences: preferencesMap });\r\n  },\r\n\r\n  updatePreference: (userId: string, data: Partial<NotificationPreference>) => {\r\n    set((state) => ({\r\n      preferences: {\r\n        ...state.preferences,\r\n        [userId]: {\r\n          ...state.preferences[userId],\r\n          ...data,\r\n        },\r\n      },\r\n    }));\r\n  },\r\n\r\n  setLoading: (loading: boolean) => {\r\n    set({ isLoading: loading });\r\n  },\r\n\r\n  getUserPreference: (userId: string) => {\r\n    return get().preferences[userId];\r\n  },\r\n}));\r\n"
+        }
+    ]
+}

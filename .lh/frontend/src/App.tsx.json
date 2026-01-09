@@ -1,0 +1,22 @@
+{
+    "sourceFile": "frontend/src/App.tsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1767980354298,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1767980443243,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,9 +6,9 @@\n import { Dashboard } from './pages/dashboard';\r\n import { UserManagement } from './pages/users';\r\n import { NotificationPreferences } from './pages/preferences';\r\n import { CampaignList, CreateCampaign, RecipientPreview } from './pages/campaigns';\r\n-import { NotificationLogs } from './pages/logs';\r\n+import { NotificationLogs } from './pages';\r\n import { UserPreferenceCenter } from './pages/preferences/UserPreferenceCenter';\r\n import { useAuthStore } from './store/authStore';\r\n \r\n function App() {\r\n"
+                }
+            ],
+            "date": 1767980354298,
+            "name": "Commit-0",
+            "content": "\r\nimport { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';\r\nimport { DashboardLayout } from './components/layout';\r\nimport { ProtectedRoute } from './components/ProtectedRoute';\r\nimport { UserLogin, UserSignup, AdminLogin } from './pages/auth';\r\nimport { Dashboard } from './pages/dashboard';\r\nimport { UserManagement } from './pages/users';\r\nimport { NotificationPreferences } from './pages/preferences';\r\nimport { CampaignList, CreateCampaign, RecipientPreview } from './pages/campaigns';\r\nimport { NotificationLogs } from './pages/logs';\r\nimport { UserPreferenceCenter } from './pages/preferences/UserPreferenceCenter';\r\nimport { useAuthStore } from './store/authStore';\r\n\r\nfunction App() {\r\n  const { isAuthenticated } = useAuthStore();\r\n\r\n  return (\r\n    <Router>\r\n      <Routes>\r\n        {/* Public Routes */}\r\n        <Route path=\"/login\" element={isAuthenticated ? <Navigate to=\"/dashboard\" /> : <UserLogin />} />\r\n        <Route path=\"/signup\" element={isAuthenticated ? <Navigate to=\"/dashboard\" /> : <UserSignup />} />\r\n        <Route path=\"/admin/login\" element={isAuthenticated ? <Navigate to=\"/dashboard\" /> : <AdminLogin />} />\r\n        <Route path=\"/preferences/public\" element={<UserPreferenceCenter />} />\r\n\r\n        {/* Protected Routes */}\r\n        <Route\r\n          path=\"/\"\r\n          element={\r\n            <ProtectedRoute>\r\n              <DashboardLayout />\r\n            </ProtectedRoute>\r\n          }\r\n        >\r\n          <Route index element={<Navigate to=\"/dashboard\" replace />} />\r\n          <Route path=\"dashboard\" element={<Dashboard />} />\r\n          <Route path=\"users\" element={<UserManagement />} />\r\n          <Route path=\"preferences\" element={<NotificationPreferences />} />\r\n          <Route path=\"campaigns\" element={<CampaignList />} />\r\n          <Route path=\"campaigns/create\" element={<CreateCampaign />} />\r\n          <Route path=\"campaigns/:campaignId/edit\" element={<CreateCampaign />} />\r\n          <Route path=\"campaigns/:campaignId/preview\" element={<RecipientPreview />} />\r\n          <Route path=\"logs\" element={<NotificationLogs />} />\r\n        </Route>\r\n\r\n        {/* Catch all */}\r\n        <Route path=\"*\" element={<Navigate to=\"/dashboard\" replace />} />\r\n      </Routes>\r\n    </Router>\r\n  );\r\n}\r\n\r\nexport default App;\r\n"
+        }
+    ]
+}

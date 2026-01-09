@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/components/layout/DashboardLayout.tsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354056,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354056,
+            "name": "Commit-0",
+            "content": "import React, { useState } from 'react';\r\nimport { Outlet } from 'react-router-dom';\r\nimport { Sidebar } from './Sidebar';\r\nimport { Header } from './Header';\r\n\r\nexport const DashboardLayout: React.FC = () => {\r\n  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);\r\n\r\n  return (\r\n    <div className=\"min-h-screen bg-gray-50\">\r\n      <Sidebar\r\n        isMobileOpen={isMobileSidebarOpen}\r\n        onMobileClose={() => setIsMobileSidebarOpen(false)}\r\n      />\r\n\r\n      <div className=\"lg:pl-64\">\r\n        <Header onMenuClick={() => setIsMobileSidebarOpen(true)} />\r\n\r\n        <main className=\"p-4 lg:p-8\">\r\n          <Outlet />\r\n        </main>\r\n      </div>\r\n    </div>\r\n  );\r\n};\r\n"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/pages/index.ts",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354299,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354299,
+            "name": "Commit-0",
+            "content": "export { Dashboard } from './dashboard';\r\nexport { UserLogin, UserSignup, AdminLogin } from './auth';\r\nexport { UserManagement } from './users';\r\nexport { NotificationPreferences } from './preferences';\r\nexport { CampaignList, CreateCampaign, RecipientPreview } from './campaigns';\r\nexport { NotificationLogs } from './logs';\r\nexport { UserPreferenceCenter } from './preferences/UserPreferenceCenter';\r\n"
+        }
+    ]
+}

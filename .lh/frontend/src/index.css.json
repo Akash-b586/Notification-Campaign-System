@@ -1,0 +1,18 @@
+{
+    "sourceFile": "frontend/src/index.css",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767980354042,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767980354042,
+            "name": "Commit-0",
+            "content": "@import 'tailwindcss';\r\n\r\n@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');\r\n\r\nbody {\r\n  background-color: #f9fafb;\r\n  color: #111827;\r\n  font-family: 'Inter', system-ui, -apple-system, sans-serif;\r\n  -webkit-font-smoothing: antialiased;\r\n  -moz-osx-font-smoothing: grayscale;\r\n  margin: 0;\r\n  min-height: 100vh;\r\n}\r\n\r\n* {\r\n  border-color: #e5e7eb;\r\n}\r\n\r\n/* Custom scrollbar */\r\n.custom-scrollbar::-webkit-scrollbar {\r\n  width: 8px;\r\n  height: 8px;\r\n}\r\n\r\n.custom-scrollbar::-webkit-scrollbar-track {\r\n  background-color: #f3f4f6;\r\n}\r\n\r\n.custom-scrollbar::-webkit-scrollbar-thumb {\r\n  background-color: #d1d5db;\r\n  border-radius: 9999px;\r\n}\r\n\r\n.custom-scrollbar::-webkit-scrollbar-thumb:hover {\r\n  background-color: #9ca3af;\r\n}\r\n"
+        }
+    ]
+}
