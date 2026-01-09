@@ -1,0 +1,18 @@
+{
+    "sourceFile": "backend/src/index.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767958974603,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767958974603,
+            "name": "Commit-0",
+            "content": "const express = require('express');\r\nconst cors = require('cors');\r\nconst dotenv = require('dotenv');\r\n\r\ndotenv.config();\r\n\r\nconst app = express();\r\nconst PORT = process.env.PORT || 5000;\r\n\r\n// Middleware\r\napp.use(cors());\r\napp.use(express.json());\r\napp.use(express.urlencoded({ extended: true }));\r\n\r\n// Health check route\r\napp.get('/health', (req, res) => {\r\n  res.status(200).json({ \r\n    status: 'success',\r\n    message: 'Server is running',\r\n    timestamp: new Date().toISOString()\r\n  });\r\n});\r\n\r\n// Root route\r\napp.get('/', (req, res) => {\r\n  res.json({ \r\n    message: 'Notification Campaign System API',\r\n    version: '1.0.0'\r\n  });\r\n});\r\n\r\n// Start server\r\napp.listen(PORT, () => {\r\n  console.log(`Server is running on port ${PORT}`);\r\n  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);\r\n});\r\n"
+        }
+    ]
+}

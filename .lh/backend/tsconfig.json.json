@@ -1,0 +1,18 @@
+{
+    "sourceFile": "backend/tsconfig.json",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1767958974605,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1767958974605,
+            "name": "Commit-0",
+            "content": "{\r\n  \"compilerOptions\": {\r\n    \"target\": \"ES2020\",\r\n    \"module\": \"commonjs\",\r\n    \"lib\": [\"ES2020\"],\r\n    \"outDir\": \"./dist\",\r\n    \"rootDir\": \"./src\",\r\n    \"strict\": true,\r\n    \"esModuleInterop\": true,\r\n    \"skipLibCheck\": true,\r\n    \"forceConsistentCasingInFileNames\": true,\r\n    \"resolveJsonModule\": true,\r\n    \"moduleResolution\": \"node\",\r\n    \"sourceMap\": true\r\n  },\r\n  \"include\": [\"src/**/*\"],\r\n  \"exclude\": [\"node_modules\", \"dist\"]\r\n}\r\n"
+        }
+    ]
+}
