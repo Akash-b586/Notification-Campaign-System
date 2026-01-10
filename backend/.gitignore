@@ -1,3 +1,14 @@
-node_modules
-# Keep environment variables out of version control
+# Dependencies
+node_modules/
+
+# Prisma generated files (extra safety)
+node_modules/.prisma/
+node_modules/prisma/
+
+# Build output
+dist/
+
+# Env files
 .env
+
+node_modules
