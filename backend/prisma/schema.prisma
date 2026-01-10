@@ -9,6 +9,105 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  userId   String  @id @default(uuid())
+  name     String
+  email    String? @unique
+  password String
+  phone    String?
+  city     String?
+  isActive Boolean @default(true)
+
+  preference Preference?
+  recipients CampaignRecipient[]
+  logs       NotificationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Preference {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  offers       Boolean @default(true)
+  orderUpdates Boolean @default(true)
+  newsletter   Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [userId],onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
+}
+
+model SystemUser {
+  userId       String   @id @default(uuid())
+  name     String
+  email    String   @unique
+  password String
+  role     RoleType
+
+  createdAt DateTime   @default(now())
+  createdCampaigns Campaign[] @relation("SystemUserCampaigns")
+}
+
+model Campaign {
+  id               String           @id @default(uuid())
+  campaignName     String
+  notificationType NotificationType
+  cityFilter       String?
+  status           CampaignStatus   @default(DRAFT)
+
+  createdById String
+  createdBy   SystemUser @relation("SystemUserCampaigns",fields: [createdById], references: [userId])
+
+  recipients CampaignRecipient[]
+  logs       NotificationLog[]
+
+  createdAt DateTime @default(now())
+}
+
+model CampaignRecipient {
+  id         String @id @default(uuid())
+  campaignId String
+  userId     String 
+  campaign Campaign @relation(fields: [campaignId], references: [id],onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [userId],onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+}
+
+model NotificationLog {
+  id         String     @id @default(uuid())
+  campaignId String
+  userId     String
+  sentAt     DateTime   @default(now())
+  status     SendStatus
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  user     User     @relation(fields: [userId], references: [userId])
+}
+
+enum RoleType {
+  ADMIN
+  CREATOR
+  VIEWER
+}
+
+enum NotificationType {
+  OFFERS
+  ORDER_UPDATES
+  NEWSLETTER
+}
+
+enum CampaignStatus {
+  DRAFT
+  SENT
+}
+
+enum SendStatus {
+  SUCCESS
+  FAILED
 }
