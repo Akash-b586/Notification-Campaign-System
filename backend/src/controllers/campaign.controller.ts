@@ -11,7 +11,7 @@ export const createCampaign = async (req: any, res: any) => {
     const campaign = await prisma.campaign.create({
       data: {
         campaignName,
-        notificationType,
+        notificationType: notificationType.toUpperCase().replace(/-/g, '_'),
         cityFilter,
         createdById: req.user?.userId!,
         status: "DRAFT",
@@ -40,12 +40,21 @@ export const previewCampaign = async (req: any, res: any) => {
       return res.status(404).json({ message: "Campaign not found" });
     }
 
+    // Map enum to preference field name
+    const preferenceFieldMap: Record<string, string> = {
+      OFFERS: 'offers',
+      ORDER_UPDATES: 'orderUpdates',
+      NEWSLETTER: 'newsletter',
+    };
+
+    const preferenceField = preferenceFieldMap[campaign.notificationType];
+
     const users = await prisma.user.findMany({
       where: {
         isActive: true,
         ...(campaign.cityFilter && { city: campaign.cityFilter }),
         preference: {
-          [campaign.notificationType.toLowerCase()]: true,
+          [preferenceField]: true,
         },
       },
       select: {
@@ -81,12 +90,21 @@ export const sendCampaign = async (req: any, res: any) => {
       return res.status(400).json({ message: "Campaign already sent" });
     }
 
+    // Map enum to preference field name
+    const preferenceFieldMap: Record<string, string> = {
+      OFFERS: 'offers',
+      ORDER_UPDATES: 'orderUpdates',
+      NEWSLETTER: 'newsletter',
+    };
+
+    const preferenceField = preferenceFieldMap[campaign.notificationType];
+
     const users = await prisma.user.findMany({
       where: {
         isActive: true,
         ...(campaign.cityFilter && { city: campaign.cityFilter }),
         preference: {
-          [campaign.notificationType.toLowerCase()]: true,
+          [preferenceField]: true,
         },
       },
       select: { userId: true },
@@ -149,6 +167,25 @@ export const listCampaigns = async (req: any, res: any) => {
   }
 };
 
+export const getCampaign = async (req: any, res: any) => {
+  try {
+    const campaignId = req.params.id;
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    return res.json(campaign);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch campaign" });
+  }
+};
+
 export const getCampaignRecipients = async (req:any, res: any) => {
   try {
     const campaignId = req.params.id;
@@ -186,7 +223,7 @@ export const updateCampaign = async (req: any, res: any) => {
       where: { id: campaignId },
       data: {
         ...(campaignName && { campaignName }),
-        ...(notificationType && { notificationType }),
+        ...(notificationType && { notificationType: notificationType.toUpperCase().replace(/-/g, '_') }),
         ...(cityFilter !== undefined && { cityFilter }),
       },
     });

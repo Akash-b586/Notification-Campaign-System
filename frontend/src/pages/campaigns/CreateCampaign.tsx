@@ -1,55 +1,118 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
 import { Button, Card, Input, Select } from '../../components/ui';
-import { useCampaignStore } from '../../store/campaignStore';
 import { useAuthStore } from '../../store/authStore';
-import type { Campaign } from '../../types';
+import { campaignService } from '../../services/api';
 
 export const CreateCampaign: React.FC = () => {
   const navigate = useNavigate();
-  const { addCampaign } = useCampaignStore();
+  const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     campaign_name: '',
     notification_type: '',
     city_filter: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingCampaign, setIsFetchingCampaign] = useState(false);
+  const [error, setError] = useState('');
+
+  const isEditMode = !!campaignId;
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetchCampaign();
+    }
+  }, [campaignId]);
+
+  const fetchCampaign = async () => {
+    setIsFetchingCampaign(true);
+    setError('');
+    try {
+      const data = await campaignService.get(campaignId!);
+      // Convert backend format to frontend format
+      const notifType = data.notificationType.toLowerCase().replace(/_/g, '-');
+      setFormData({
+        campaign_name: data.campaignName,
+        notification_type: notifType === 'order-updates' ? 'order_updates' : notifType,
+        city_filter: data.cityFilter || '',
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to load campaign');
+    } finally {
+      setIsFetchingCampaign(false);
+    }
+  };
 
   const cities = ['', 'Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad'];
 
-  const handleSaveDraft = () => {
-    const newCampaign: Campaign = {
-      campaign_id: `camp-${Date.now()}`,
-      campaign_name: formData.campaign_name,
-      notification_type: formData.notification_type as any,
-      city_filter: formData.city_filter || undefined,
-      created_by: user?.user_id || '',
-      status: 'draft',
-      created_at: new Date().toISOString(),
-    };
+  const handleSaveDraft = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      if (isEditMode) {
+        await campaignService.update(campaignId!, {
+          campaignName: formData.campaign_name,
+          notificationType: formData.notification_type,
+          cityFilter: formData.city_filter || undefined,
+        });
+      } else {
+        await campaignService.create({
+          campaignName: formData.campaign_name,
+          notificationType: formData.notification_type,
+          cityFilter: formData.city_filter || undefined,
+        });
+      }
 
-    addCampaign(newCampaign);
-    navigate('/campaigns');
+      navigate('/campaigns');
+    } catch (err: any) {
+      setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} campaign`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handlePreview = () => {
-    // Store form data temporarily and navigate to preview
-    const newCampaign: Campaign = {
-      campaign_id: `temp-${Date.now()}`,
-      campaign_name: formData.campaign_name,
-      notification_type: formData.notification_type as any,
-      city_filter: formData.city_filter || undefined,
-      created_by: user?.user_id || '',
-      status: 'draft',
-      created_at: new Date().toISOString(),
-    };
+  const handlePreview = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      let campaignIdToPreview = campaignId;
 
-    addCampaign(newCampaign);
-    navigate(`/campaigns/${newCampaign.campaign_id}/preview`);
+      if (isEditMode) {
+        await campaignService.update(campaignId!, {
+          campaignName: formData.campaign_name,
+          notificationType: formData.notification_type,
+          cityFilter: formData.city_filter || undefined,
+        });
+      } else {
+        const response = await campaignService.create({
+          campaignName: formData.campaign_name,
+          notificationType: formData.notification_type,
+          cityFilter: formData.city_filter || undefined,
+        });
+        campaignIdToPreview = response.campaignId;
+      }
+
+      navigate(`/campaigns/${campaignIdToPreview}/preview`, {
+        state: { campaignName: formData.campaign_name },
+      });
+    } catch (err: any) {
+      setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} campaign`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isValid = formData.campaign_name && formData.notification_type;
+
+  if (isFetchingCampaign) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-gray-600">Loading campaign...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -63,11 +126,22 @@ export const CreateCampaign: React.FC = () => {
         >
           Back to Campaigns
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900 mt-4">Create New Campaign</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mt-4">
+          {isEditMode ? 'Edit Campaign' : 'Create New Campaign'}
+        </h1>
         <p className="text-gray-600 mt-1">
-          Set up a new notification campaign with targeting criteria
+          {isEditMode
+            ? 'Update your notification campaign details'
+            : 'Set up a new notification campaign with targeting criteria'}
         </p>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Form */}
       <Card title="Campaign Details">
@@ -135,21 +209,23 @@ export const CreateCampaign: React.FC = () => {
       <Card>
         <div className="p-6 flex items-center justify-between gap-4">
           <p className="text-sm text-gray-600">
-            Save as draft or proceed to preview recipients
+            {isEditMode ? 'Update campaign or preview recipients' : 'Save as draft or proceed to preview recipients'}
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={handleSaveDraft}
-              disabled={!isValid}
+              disabled={!isValid || isLoading}
+              isLoading={isLoading}
               icon={<Save className="w-5 h-5" />}
             >
-              Save as Draft
+              {isEditMode ? 'Update Campaign' : 'Save as Draft'}
             </Button>
             <Button
               variant="primary"
               onClick={handlePreview}
-              disabled={!isValid}
+              disabled={!isValid || isLoading}
+              isLoading={isLoading}
               icon={<Eye className="w-5 h-5" />}
             >
               Preview Recipients

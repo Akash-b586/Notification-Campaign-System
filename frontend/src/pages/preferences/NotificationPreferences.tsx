@@ -9,105 +9,93 @@ import {
   Button,
 } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
-import { useUserStore } from '../../store/userStore';
-import { usePreferenceStore } from '../../store/preferenceStore';
-import type { NotificationPreference, User } from '../../types';
+import { preferenceService } from '../../services/api';
+import type { User } from '../../types';
 
 interface UserWithPreferences extends User {
-  preferences: NotificationPreference;
+  preference: {
+    offers: boolean;
+    orderUpdates: boolean;
+    newsletter: boolean;
+  } | null;
 }
 
 export const NotificationPreferences: React.FC = () => {
   const { hasPermission } = useAuthStore();
-  const { users, setUsers } = useUserStore();
-  const { preferences, setPreferences, updatePreference } = usePreferenceStore();
+  const [users, setUsers] = useState<UserWithPreferences[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [changedUsers, setChangedUsers] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [changedUsers, setChangedUsers] = useState<Map<string, any>>(new Map());
 
   const canUpdate = hasPermission('preferences', 'update');
 
   useEffect(() => {
-    // Mock data load
-    setTimeout(() => {
-      const mockUsers: User[] = [
-        {
-          user_id: '1',
-          name: 'Amit Kumar',
-          email: 'amit@example.com',
-          phone: '9999999999',
-          city: 'Delhi',
-          is_active: true,
-        },
-        {
-          user_id: '2',
-          name: 'Riya Sharma',
-          email: 'riya@example.com',
-          phone: '8888888888',
-          city: 'Mumbai',
-          is_active: true,
-        },
-        {
-          user_id: '3',
-          name: 'Priya Singh',
-          email: 'priya@example.com',
-          phone: '7777777777',
-          city: 'Bangalore',
-          is_active: false,
-        },
-        {
-          user_id: '4',
-          name: 'Raj Patel',
-          email: 'raj@example.com',
-          phone: '6666666666',
-          city: 'Delhi',
-          is_active: true,
-        },
-      ];
-      setUsers(mockUsers);
+    fetchUsers();
+  }, []);
 
-      const mockPreferences: NotificationPreference[] = [
-        { user_id: '1', offers: true, order_updates: true, newsletter: false },
-        { user_id: '2', offers: false, order_updates: true, newsletter: true },
-        { user_id: '3', offers: true, order_updates: false, newsletter: false },
-        { user_id: '4', offers: true, order_updates: true, newsletter: true },
-      ];
-      setPreferences(mockPreferences);
-
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await preferenceService.getAllUsers();
+      setUsers(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load users');
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, [setUsers, setPreferences]);
+    }
+  };
 
   const handlePreferenceChange = (
     userId: string,
-    type: keyof NotificationPreference,
+    type: 'offers' | 'orderUpdates' | 'newsletter',
     value: boolean
   ) => {
-    updatePreference(userId, { [type]: value });
-    setChangedUsers(new Set([...changedUsers, userId]));
+    setUsers((prev) =>
+      prev.map((user) => {
+        if (user.userId === userId && user.preference) {
+          return {
+            ...user,
+            preference: {
+              ...user.preference,
+              [type]: value,
+            },
+          };
+        }
+        return user;
+      })
+    );
+
+    const existingChanges = changedUsers.get(userId) || {};
+    setChangedUsers(new Map(changedUsers.set(userId, { ...existingChanges, [type]: value })));
   };
 
-  const handleSave = () => {
-    // Mock save - Replace with actual API call
-    console.log('Saving preferences for users:', Array.from(changedUsers));
-    setChangedUsers(new Set());
-    alert('Preferences saved successfully!');
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError('');
+
+    try {
+      const promises = Array.from(changedUsers.entries()).map(([userId, changes]) =>
+        preferenceService.updateUserPreference(userId, changes)
+      );
+
+      await Promise.all(promises);
+      setChangedUsers(new Map());
+      alert('Preferences saved successfully!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save preferences');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const usersWithPreferences: UserWithPreferences[] = users
-    .filter((user) =>
+  const usersWithPreferences: UserWithPreferences[] = users.filter(
+    (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .map((user) => ({
-      ...user,
-      preferences: preferences[user.user_id] || {
-        user_id: user.user_id,
-        offers: false,
-        order_updates: false,
-        newsletter: false,
-      },
-    }));
+      (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const columns = [
     {
@@ -116,7 +104,7 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div>
           <div className="font-medium text-gray-900">{user.name}</div>
-          <div className="text-sm text-gray-500">{user.email}</div>
+          <div className="text-sm text-gray-500">{user.email || 'No email'}</div>
         </div>
       ),
       width: '30%',
@@ -132,11 +120,11 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div className="flex items-center justify-center">
           <ToggleSwitch
-            checked={user.preferences.offers}
+            checked={user.preference?.offers || false}
             onChange={(value) =>
-              handlePreferenceChange(user.user_id, 'offers', value)
+              handlePreferenceChange(user.userId, 'offers', value)
             }
-            disabled={!canUpdate}
+            disabled={!canUpdate || !user.preference}
           />
         </div>
       ),
@@ -152,11 +140,11 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div className="flex items-center justify-center">
           <ToggleSwitch
-            checked={user.preferences.order_updates}
+            checked={user.preference?.orderUpdates || false}
             onChange={(value) =>
-              handlePreferenceChange(user.user_id, 'order_updates', value)
+              handlePreferenceChange(user.userId, 'orderUpdates', value)
             }
-            disabled={!canUpdate}
+            disabled={!canUpdate || !user.preference}
           />
         </div>
       ),
@@ -172,11 +160,11 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div className="flex items-center justify-center">
           <ToggleSwitch
-            checked={user.preferences.newsletter}
+            checked={user.preference?.newsletter || false}
             onChange={(value) =>
-              handlePreferenceChange(user.user_id, 'newsletter', value)
+              handlePreferenceChange(user.userId, 'newsletter', value)
             }
-            disabled={!canUpdate}
+            disabled={!canUpdate || !user.preference}
           />
         </div>
       ),
@@ -206,11 +194,19 @@ export const NotificationPreferences: React.FC = () => {
             onClick={handleSave}
             variant="success"
             icon={<Save className="w-5 h-5" />}
+            isLoading={isSaving}
           >
             Save Changes ({changedUsers.size})
           </Button>
         )}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -226,7 +222,7 @@ export const NotificationPreferences: React.FC = () => {
           </p>
           <div className="mt-3 text-2xl font-bold text-orange-600">
             {
-              usersWithPreferences.filter((u) => u.preferences.offers).length
+              usersWithPreferences.filter((u) => u.preference?.offers).length
             }{' '}
             <span className="text-sm font-normal text-gray-600">opted in</span>
           </div>
@@ -244,7 +240,7 @@ export const NotificationPreferences: React.FC = () => {
           </p>
           <div className="mt-3 text-2xl font-bold text-blue-600">
             {
-              usersWithPreferences.filter((u) => u.preferences.order_updates).length
+              usersWithPreferences.filter((u) => u.preference?.orderUpdates).length
             }{' '}
             <span className="text-sm font-normal text-gray-600">opted in</span>
           </div>
@@ -262,7 +258,7 @@ export const NotificationPreferences: React.FC = () => {
           </p>
           <div className="mt-3 text-2xl font-bold text-green-600">
             {
-              usersWithPreferences.filter((u) => u.preferences.newsletter).length
+              usersWithPreferences.filter((u) => u.preference?.newsletter).length
             }{' '}
             <span className="text-sm font-normal text-gray-600">opted in</span>
           </div>

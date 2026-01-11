@@ -9,14 +9,14 @@ export const authenticate = (
   const token = req.cookies.jwt;
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized - No token" });
   }
 
   try {
     const decoded = verifyToken(token);
     req.user = decoded;
     next();
-  } catch {
+  } catch (error) {
     return res.status(401).json({ message: "Invalid token" });
   }
 };

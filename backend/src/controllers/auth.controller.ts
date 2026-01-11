@@ -95,12 +95,15 @@ export const login = async (req: any, res: any) => {
     res.cookie("jwt",token,{
         maxAge: 2*24*60*60*1000,
         httpOnly:true,
-        sameSite:"none",
-        secure: false
+        sameSite:"lax",
+        secure: process.env.NODE_ENV === "production"
     });
 
     return res.json({
       message: "Login successful",
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
       userType,
       role: userType === "SYSTEM_USER" ? user.role : null
     });

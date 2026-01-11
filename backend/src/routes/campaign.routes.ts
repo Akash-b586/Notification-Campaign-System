@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {createCampaign,listCampaigns,previewCampaign,sendCampaign,getCampaignRecipients ,updateCampaign} from "../controllers/campaign.controller";
+import {createCampaign,listCampaigns,getCampaign,previewCampaign,sendCampaign,getCampaignRecipients ,updateCampaign} from "../controllers/campaign.controller";
 import { authorize } from "../middleware/authorize.middleware";
 
 const router = Router();
@@ -10,6 +10,7 @@ router.post('/:id/preview',authorize("ADMIN", "CREATOR"),previewCampaign); // pr
 router.post('/:id/send',authorize("ADMIN", "CREATOR"),sendCampaign); // send campaign
 
 router.get('/',authorize(),listCampaigns); // list campaigns
+router.get('/:id',authorize(),getCampaign); // get single campaign
 router.get('/:id/recipients',authorize(),getCampaignRecipients); // get campaign recipients
 
 // router.get('/:id/audience/count',authorize(),getAudienceCount);   // get audience count

@@ -71,6 +71,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  userType?: 'END_USER' | 'SYSTEM_USER';
   token?: string;
 }
 

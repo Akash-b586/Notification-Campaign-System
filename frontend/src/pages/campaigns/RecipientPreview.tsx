@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, Send, Users, CheckCircle } from 'lucide-react';
 import {
   Button,
@@ -9,56 +9,64 @@ import {
   LoadingSpinner,
   Modal,
 } from '../../components/ui';
-import { useCampaignStore } from '../../store/campaignStore';
-import { useUserStore } from '../../store/userStore';
-import { usePreferenceStore } from '../../store/preferenceStore';
+import { campaignService } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import type { User } from '../../types';
 
 export const RecipientPreview: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
-  const { campaigns, updateCampaign } = useCampaignStore();
-  const { users } = useUserStore();
-  const { preferences } = usePreferenceStore();
+  const location = useLocation();
   const { hasPermission } = useAuthStore();
+  const [campaign, setCampaign] = useState<any>(location.state || null);
   const [eligibleUsers, setEligibleUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState('');
 
-  const campaign = campaigns.find((c) => c.campaign_id === campaignId);
   const canSend = hasPermission('campaigns', 'send');
   const canDownload = hasPermission('campaigns', 'download');
 
   useEffect(() => {
-    if (!campaign) return;
+    if (campaignId) {
+      fetchCampaignData();
+      fetchPreview();
+    }
+  }, [campaignId]);
 
-    // Calculate eligible users
-    setTimeout(() => {
-      const eligible = users.filter((user) => {
-        // Must be active
-        if (!user.is_active) return false;
+  const fetchCampaignData = async () => {
+    if (campaign && campaign.campaignName) return; // Already have campaign data from navigation
+    
+    try {
+      const data = await campaignService.get(campaignId!);
+      setCampaign(data);
+    } catch (err: any) {
+      console.error('Failed to fetch campaign:', err);
+    }
+  };
 
-        // Must have opted in for the notification type
-        const userPref = preferences[user.user_id];
-        if (!userPref) return false;
-
-        const notifType = campaign.notification_type;
-        if (!userPref[notifType]) return false;
-
-        // Must match city filter if specified
-        if (campaign.city_filter && user.city !== campaign.city_filter) {
-          return false;
-        }
-
-        return true;
-      });
-
-      setEligibleUsers(eligible);
+  const fetchPreview = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await campaignService.preview(campaignId!);
+      // Map backend response to frontend User format
+      const mappedUsers: User[] = data.users.map((u: any) => ({
+        user_id: u.userId,
+        name: u.name || 'Unknown',
+        email: u.email,
+        phone: u.phone,
+        city: u.city,
+        is_active: true,
+      }));
+      setEligibleUsers(mappedUsers);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load preview');
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, [campaign, users, preferences]);
+    }
+  };
 
   const handleDownloadCSV = () => {
     const csvContent = [
@@ -78,25 +86,31 @@ export const RecipientPreview: React.FC = () => {
 
   const handleSend = async () => {
     setIsSending(true);
+    setError('');
 
-    // Mock sending process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Update campaign status
-    updateCampaign(campaignId!, {
-      status: 'sent',
-      recipient_count: eligibleUsers.length,
-    });
-
-    setIsSending(false);
-    setShowConfirmModal(false);
-    navigate('/campaigns');
+    try {
+      await campaignService.send(campaignId!);
+      navigate('/campaigns');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send campaign');
+    } finally {
+      setIsSending(false);
+      setShowConfirmModal(false);
+    }
   };
 
-  if (!campaign) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <LoadingSpinner size="lg" text="Loading recipients..." />
+      </div>
+    );
+  }
+
+  if (error && eligibleUsers.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Campaign not found</p>
+        <p className="text-red-600 mb-4">{error}</p>
         <Button
           onClick={() => navigate('/campaigns')}
           variant="primary"
@@ -104,14 +118,6 @@ export const RecipientPreview: React.FC = () => {
         >
           Back to Campaigns
         </Button>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <LoadingSpinner size="lg" text="Calculating eligible recipients..." />
       </div>
     );
   }
@@ -164,8 +170,17 @@ export const RecipientPreview: React.FC = () => {
           Back to Campaigns
         </Button>
         <h1 className="text-3xl font-bold text-gray-900 mt-4">Recipient Preview</h1>
-        <p className="text-gray-600 mt-1">{campaign.campaign_name}</p>
+        <p className="text-gray-600 mt-1">
+          {campaign ? campaign.campaignName : `Campaign ID: ${campaignId}`}
+        </p>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Campaign Info */}
       <Card>
@@ -179,18 +194,9 @@ export const RecipientPreview: React.FC = () => {
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="w-4 h-4 text-green-600" />
               <span className="text-gray-700">
-                User must have opted in for{' '}
-                <strong>{campaign.notification_type.replace('_', ' ')}</strong>
+                User must have opted in for notifications
               </span>
             </div>
-            {campaign.city_filter && (
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-gray-700">
-                  User must be from <strong>{campaign.city_filter}</strong>
-                </span>
-              </div>
-            )}
           </div>
         </div>
       </Card>
@@ -229,7 +235,7 @@ export const RecipientPreview: React.FC = () => {
                 Download CSV
               </Button>
             )}
-            {canSend && campaign.status === 'draft' && (
+            {canSend && campaign && campaign.status === 'DRAFT' && (
               <Button
                 variant="success"
                 onClick={() => setShowConfirmModal(true)}
@@ -276,7 +282,7 @@ export const RecipientPreview: React.FC = () => {
       >
         <div className="space-y-4">
           <p className="text-gray-700">
-            You are about to send <strong>{campaign.campaign_name}</strong> to{' '}
+            You are about to send <strong>{campaign?.campaignName || 'this campaign'}</strong> to{' '}
             <strong>{eligibleUsers.length} users</strong>.
           </p>
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

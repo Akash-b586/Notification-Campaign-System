@@ -13,6 +13,7 @@ import {
   Bar,
 } from 'recharts';
 import { useAuthStore } from '../../store/authStore';
+import { statsService } from '../../services/api';
 
 interface MetricCardProps {
   title: string;
@@ -52,40 +53,72 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, trend, colo
 export const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data
-  const [stats] = useState({
-    activeUsers: 2847,
-    campaignsSent: 156,
-    draftCampaigns: 9,
-    totalNotifications: 45892,
+  const [stats, setStats] = useState({
+    activeUsers: 0,
+    campaignsSent: 0,
+    draftCampaigns: 0,
+    totalNotifications: 0,
   });
 
-  const [activityData] = useState([
-    { date: 'Jan 1', notifications: 1200 },
-    { date: 'Jan 2', notifications: 1900 },
-    { date: 'Jan 3', notifications: 1600 },
-    { date: 'Jan 4', notifications: 2200 },
-    { date: 'Jan 5', notifications: 2800 },
-    { date: 'Jan 6', notifications: 2400 },
-    { date: 'Jan 7', notifications: 3100 },
-  ]);
-
-  const [campaignStats] = useState([
-    { type: 'Offers', count: 85 },
-    { type: 'Order Updates', count: 45 },
-    { type: 'Newsletter', count: 26 },
-  ]);
+  const [activityData, setActivityData] = useState<Array<{ date: string; notifications: number }>>([]);
+  const [campaignStats, setCampaignStats] = useState<Array<{ type: string; count: number }>>([]);
+  const [recentActivities, setRecentActivities] = useState<Array<{
+    action: string;
+    user: string;
+    time: string;
+    type: string;
+  }>>([]);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 800);
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [summary, activity, distribution, recent] = await Promise.all([
+        statsService.getSummary(),
+        statsService.getActivity(),
+        statsService.getCampaignDistribution(),
+        statsService.getRecentActivity(),
+      ]);
+
+      setStats(summary);
+      setActivityData(activity);
+      setCampaignStats(distribution);
+      setRecentActivities(recent);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch dashboard data');
+      console.error('Dashboard fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
         <LoadingSpinner size="lg" text="Loading dashboard..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold mb-2">Failed to load dashboard</p>
+          <p className="text-gray-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -185,51 +218,32 @@ export const Dashboard: React.FC = () => {
       {/* Recent Activity */}
       <Card title="Recent Activity">
         <div className="p-6">
-          <div className="space-y-4">
-            {[
-              {
-                action: 'Campaign "Diwali Offers" sent',
-                user: 'Admin',
-                time: '2 hours ago',
-                type: 'success',
-              },
-              {
-                action: 'New user registered',
-                user: 'Amit Kumar',
-                time: '3 hours ago',
-                type: 'info',
-              },
-              {
-                action: 'Campaign "Newsletter Jan" created',
-                user: 'Creator',
-                time: '5 hours ago',
-                type: 'info',
-              },
-              {
-                action: 'User preferences updated',
-                user: 'Riya Sharma',
-                time: '6 hours ago',
-                type: 'info',
-              },
-            ].map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
+          {recentActivities.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No recent activity
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentActivities.map((activity, index) => (
                 <div
-                  className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                  }`}
-                />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    by {activity.user} • {activity.time}
-                  </p>
+                  key={index}
+                  className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full mt-2 ${
+                      activity.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      to {activity.user} • {activity.time}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
     </div>

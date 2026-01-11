@@ -86,8 +86,8 @@ model NotificationLog {
   sentAt     DateTime   @default(now())
   status     SendStatus
 
-  campaign Campaign @relation(fields: [campaignId], references: [id])
-  user     User     @relation(fields: [userId], references: [userId])
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 enum RoleType {

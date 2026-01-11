@@ -7,6 +7,7 @@ import {
   Megaphone,
   FileText,
   LogOut,
+  UserPlus,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -51,6 +52,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose })
       label: 'Campaigns',
       icon: <Megaphone className="w-5 h-5" />,
       permission: 'campaigns',
+    },
+    {
+      path: '/staff/add',
+      label: 'Add Staff',
+      icon: <UserPlus className="w-5 h-5" />,
+      permission: 'staff',
     },
     {
       path: '/logs',

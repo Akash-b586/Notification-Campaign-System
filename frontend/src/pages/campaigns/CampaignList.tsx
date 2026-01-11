@@ -12,6 +12,7 @@ import {
 } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { useCampaignStore } from '../../store/campaignStore';
+import { campaignService } from '../../services/api';
 import type { Campaign } from '../../types';
 
 export const CampaignList: React.FC = () => {
@@ -22,58 +23,38 @@ export const CampaignList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const canCreate = hasPermission('campaigns', 'create');
   const canUpdate = hasPermission('campaigns', 'update');
 
   useEffect(() => {
-    // Mock data load
-    setTimeout(() => {
-      const mockCampaigns: Campaign[] = [
-        {
-          campaign_id: '1',
-          campaign_name: 'Diwali Offers 2026',
-          notification_type: 'offers',
-          city_filter: 'Delhi',
-          created_by: 'admin-1',
-          status: 'sent',
-          created_at: '2026-01-05T10:00:00Z',
-          recipient_count: 450,
-        },
-        {
-          campaign_id: '2',
-          campaign_name: 'Order Status Updates',
-          notification_type: 'order_updates',
-          created_by: 'creator-1',
-          status: 'sent',
-          created_at: '2026-01-06T14:30:00Z',
-          recipient_count: 1250,
-        },
-        {
-          campaign_id: '3',
-          campaign_name: 'January Newsletter',
-          notification_type: 'newsletter',
-          city_filter: 'Mumbai',
-          created_by: 'creator-1',
-          status: 'draft',
-          created_at: '2026-01-08T09:15:00Z',
-          recipient_count: 0,
-        },
-        {
-          campaign_id: '4',
-          campaign_name: 'Flash Sale Bangalore',
-          notification_type: 'offers',
-          city_filter: 'Bangalore',
-          created_by: 'admin-1',
-          status: 'draft',
-          created_at: '2026-01-09T11:00:00Z',
-          recipient_count: 0,
-        },
-      ];
-      setCampaigns(mockCampaigns);
+    fetchCampaigns();
+  }, []);
+
+  const fetchCampaigns = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await campaignService.list();
+      // Map backend response to frontend format
+      const mappedCampaigns: Campaign[] = data.map((c: any) => ({
+        campaign_id: c.id,
+        campaign_name: c.campaignName,
+        notification_type: c.notificationType.toLowerCase(),
+        city_filter: c.cityFilter,
+        created_by: c.createdById,
+        status: c.status.toLowerCase(),
+        created_at: c.createdAt,
+        recipient_count: 0, // Will be fetched separately if needed
+      }));
+      setCampaigns(mappedCampaigns);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load campaigns');
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, [setCampaigns]);
+    }
+  };
 
   const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch =
@@ -215,6 +196,13 @@ export const CampaignList: React.FC = () => {
           </Button>
         )}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

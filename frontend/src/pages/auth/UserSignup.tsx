@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, MapPin, UserPlus, Bell } from 'lucide-react';
 import { Button, Input } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
+import { authService } from '../../services/api';
 
 export const UserSignup: React.FC = () => {
   const navigate = useNavigate();
@@ -30,21 +31,31 @@ export const UserSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Mock signup - Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await authService.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        city: formData.city,
+      });
 
-      // Mock user data
+      // After successful signup, log them in
+      const response = await authService.login(formData.email, formData.password);
+      
       const user = {
-        user_id: '1',
+        user_id: response.userId || '1',
         name: formData.name,
         email: formData.email,
         role: 'viewer' as const,
+        userType: 'END_USER' as const,
       };
 
       login(user);
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Failed to create account. Please try again.');
+      
+      // Redirect based on userType (signup is only for END_USER, so always redirect to /user)
+      navigate('/user');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }

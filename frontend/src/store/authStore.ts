@@ -50,20 +50,19 @@ export const useAuthStore = create<AuthState>()(
             preferences: ['create', 'read', 'update', 'delete'],
             campaigns: ['create', 'read', 'update', 'delete', 'send', 'download'],
             logs: ['read', 'download'],
+            staff: ['create', 'read', 'update', 'delete'],
           },
           creator: {
             dashboard: ['read'],
             users: ['create', 'read', 'update'],
-            preferences: ['create', 'read', 'update'],
-            campaigns: ['create', 'read', 'update', 'send', 'download'],
-            logs: ['read'],
+            preferences: ['create', 'read', 'update', 'delete'],
+            campaigns: ['create', 'read', 'update', 'download'],
+            logs: ['read', 'download'],
           },
           viewer: {
             dashboard: ['read'],
-            users: ['read'],
-            preferences: ['read'],
             campaigns: ['read', 'download'],
-            logs: ['read', 'download'],
+            logs: ['read'],
           },
         };
 

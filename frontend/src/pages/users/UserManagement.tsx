@@ -20,12 +20,12 @@ import {
   Select,
 } from "../../components/ui";
 import { useAuthStore } from "../../store/authStore";
-import { useUserStore } from "../../store/userStore";
+import { userService } from "../../services/api";
 import type { User } from "../../types";
 
 export const UserManagement: React.FC = () => {
   const { hasPermission } = useAuthStore();
-  const { users, setUsers, addUser, updateUser, deleteUser } = useUserStore();
+  const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [showActiveOnly, setShowActiveOnly] = useState(false);
@@ -33,11 +33,13 @@ export const UserManagement: React.FC = () => {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     phone: "",
     city: "",
     is_active: true,
@@ -47,46 +49,30 @@ export const UserManagement: React.FC = () => {
   const [bulkType, setBulkType] = useState<"json" | "csv">("json");
 
   useEffect(() => {
-    // Mock data load
-    setTimeout(() => {
-      const mockUsers: User[] = [
-        {
-          user_id: "1",
-          name: "Amit Kumar",
-          email: "amit@example.com",
-          phone: "9999999999",
-          city: "Delhi",
-          is_active: true,
-        },
-        {
-          user_id: "2",
-          name: "Riya Sharma",
-          email: "riya@example.com",
-          phone: "8888888888",
-          city: "Mumbai",
-          is_active: true,
-        },
-        {
-          user_id: "3",
-          name: "Priya Singh",
-          email: "priya@example.com",
-          phone: "7777777777",
-          city: "Bangalore",
-          is_active: false,
-        },
-        {
-          user_id: "4",
-          name: "Raj Patel",
-          email: "raj@example.com",
-          phone: "6666666666",
-          city: "Delhi",
-          is_active: true,
-        },
-      ];
-      setUsers(mockUsers);
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await userService.list();
+      // Map backend format to frontend format
+      const mappedUsers: User[] = data.map((u: any) => ({
+        user_id: u.userId,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        city: u.city,
+        is_active: u.isActive,
+      }));
+      setUsers(mappedUsers);
+    } catch (err: any) {
+      setError(err.message || "Failed to load users");
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, [setUsers]);
+    }
+  };
 
   const canCreate = hasPermission("users", "create");
   const canUpdate = hasPermission("users", "update");
@@ -107,6 +93,7 @@ export const UserManagement: React.FC = () => {
       setFormData({
         name: user.name,
         email: user.email,
+        password: "",
         phone: user.phone || "",
         city: user.city || "",
         is_active: user.is_active,
@@ -116,6 +103,7 @@ export const UserManagement: React.FC = () => {
       setFormData({
         name: "",
         email: "",
+        password: "",
         phone: "",
         city: "",
         is_active: true,
@@ -124,70 +112,102 @@ export const UserManagement: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    if (editingUser) {
-      updateUser(editingUser.user_id, formData);
-    } else {
-      const newUser: User = {
-        user_id: `user-${Date.now()}`,
-        ...formData,
-      };
-      addUser(newUser);
+    try {
+      if (editingUser) {
+        await userService.update(editingUser.user_id, {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          city: formData.city,
+          isActive: formData.is_active,
+        });
+      } else {
+        if (!formData.password) {
+          setError("Password is required for new users");
+          return;
+        }
+        await userService.create({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          city: formData.city,
+        });
+      }
+
+      setIsModalOpen(false);
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message || "Failed to save user");
     }
-
-    setIsModalOpen(false);
   };
 
-  const handleBulkUpload = () => {
+  const handleBulkUpload = async () => {
+    setError("");
     try {
+      let usersArray: any[] = [];
+      
       if (bulkType === "json") {
         const data = JSON.parse(bulkData);
-        const usersArray = data.users || data;
-        usersArray.forEach((user: any) => {
-          const newUser: User = {
-            user_id: user.user_id || `user-${Date.now()}-${Math.random()}`,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            city: user.city,
-            is_active: user.is_active !== false,
-          };
-          addUser(newUser);
-        });
+        usersArray = data.users || data;
       } else {
         // CSV parsing
         const lines = bulkData.trim().split("\n");
-
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(",");
-          const newUser: User = {
-            user_id: values[0] || `user-${Date.now()}-${i}`,
-            name: values[1],
-            email: values[2],
+          usersArray.push({
+            name: values[0],
+            email: values[1],
+            password: values[2],
             phone: values[3],
             city: values[4],
-            is_active: values[5] !== "false",
-          };
-          addUser(newUser);
+          });
         }
       }
+
+      const promises = usersArray.map((user) =>
+        userService.create({
+          name: user.name,
+          email: user.email,
+          password: user.password || "Password123!",
+          phone: user.phone,
+          city: user.city,
+        })
+      );
+
+      await Promise.all(promises);
       setIsBulkModalOpen(false);
       setBulkData("");
-    } catch (error) {
-      alert("Invalid data format. Please check and try again.");
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message || "Invalid data format. Please check and try again.");
     }
   };
 
-  const handleDelete = (userId: string) => {
+  const handleDelete = async (userId: string) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      deleteUser(userId);
+      setError("");
+      try {
+        await userService.delete(userId);
+        fetchUsers();
+      } catch (err: any) {
+        setError(err.message || "Failed to delete user");
+      }
     }
   };
 
-  const handleToggleActive = (userId: string, isActive: boolean) => {
-    updateUser(userId, { is_active: isActive });
+  const handleToggleActive = async (userId: string, isActive: boolean) => {
+    setError("");
+    try {
+      await userService.update(userId, { isActive });
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message || "Failed to update user status");
+    }
   };
 
   const filteredUsers = users.filter((user) => {
@@ -320,6 +340,13 @@ export const UserManagement: React.FC = () => {
         )}
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
       {/* Filters */}
       <Card>
         <div className="p-6">
@@ -398,6 +425,18 @@ export const UserManagement: React.FC = () => {
             required
             disabled={!canUpdate && !!editingUser}
           />
+          {!editingUser && (
+            <Input
+              label="Password"
+              type="password"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              required
+              placeholder="Enter password for new user"
+            />
+          )}
           <Input
             label="Phone"
             type="tel"

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn, Bell } from 'lucide-react';
 import { Button, Input } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
+import { authService } from '../../services/api';
 
 export const UserLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -20,21 +21,27 @@ export const UserLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Mock login - Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock user data
+      const response = await authService.login(formData.email, formData.password);
+      
+      // Map backend response to frontend user object
       const user = {
-        user_id: '1',
-        name: 'John Doe',
+        user_id: response.userId || '1',
+        name: response.name || formData.email.split('@')[0],
         email: formData.email,
-        role: 'creator' as const,
+        role: (response.role?.toLowerCase() || 'viewer') as const,
+        userType: response.userType as 'END_USER' | 'SYSTEM_USER',
       };
 
       login(user);
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Invalid credentials. Please try again.');
+      
+      // Redirect based on userType
+      if (response.userType === 'END_USER') {
+        navigate('/user');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -109,12 +116,6 @@ export const UserLogin: React.FC = () => {
                 Sign up
               </Link>
             </p>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <Link to="/admin/login" className="text-sm text-gray-600 hover:text-gray-900">
-              Login as Admin →
-            </Link>
           </div>
         </div>
       </div>

@@ -5,6 +5,10 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import preferenceRoutes from "./routes/preference.routes";
 import campaignRoutes from "./routes/campaign.routes";
+import userRoutes from "./routes/user.routes";
+import logRoutes from "./routes/log.routes";
+import statsRoutes from "./routes/stats.routes";
+import staffRoutes from "./routes/staff.routes";
 import { authenticate } from "./middleware/auth.middleware";
 
 dotenv.config();
@@ -13,18 +17,25 @@ const app = express();
 
 // Middleware
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Public routes (AUTH)
-app.use("/auth",authRoutes);
+app.use("/api/auth",authRoutes);
 
 // Protected routes
 app.use(authenticate);
 
-app.use("/me",preferenceRoutes);
-app.use("/campaigns", campaignRoutes);
+app.use("/api/me",preferenceRoutes);
+app.use("/api/campaigns", campaignRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/logs", logRoutes);
+app.use("/api/stats", statsRoutes);
+app.use("/api/staff", staffRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;

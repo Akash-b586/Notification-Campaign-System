@@ -1,29 +1,47 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from './components/layout';
+import { UserDashboardLayout } from './components/layout/UserDashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { UserLogin, UserSignup, AdminLogin } from './pages/auth';
+import { UserLogin, UserSignup } from './pages/auth';
 import { Dashboard } from './pages/dashboard';
 import { UserManagement } from './pages/users';
 import { NotificationPreferences } from './pages/preferences';
 import { CampaignList, CreateCampaign, RecipientPreview } from './pages/campaigns';
 import { NotificationLogs } from './pages/logs';
-import { UserPreferenceCenter } from './pages/preferences/UserPreferenceCenter';
+import { UserDashboard } from './pages/user';
+import { AddStaff } from './pages/staff';
 import { useAuthStore } from './store/authStore';
 
 function App() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+
+  // Smart redirect based on user type
+  const getDefaultRoute = () => {
+    if (!isAuthenticated) return '/login';
+    return user?.userType === 'END_USER' ? '/user' : '/dashboard';
+  };
 
   return (
     <Router>
       <Routes>
         {/* Public Routes */}
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <UserLogin />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <UserSignup />} />
-        <Route path="/admin/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <AdminLogin />} />
-        <Route path="/preferences/public" element={<UserPreferenceCenter />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to={getDefaultRoute()} /> : <UserLogin />} />
+        <Route path="/signup" element={isAuthenticated ? <Navigate to={getDefaultRoute()} /> : <UserSignup />} />
 
-        {/* Protected Routes */}
+        {/* User Dashboard (Protected) */}
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute>
+              <UserDashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<UserDashboard />} />
+        </Route>
+
+        {/* Admin/System User Dashboard (Protected) */}
         <Route
           path="/"
           element={
@@ -41,6 +59,7 @@ function App() {
           <Route path="campaigns/:campaignId/edit" element={<CreateCampaign />} />
           <Route path="campaigns/:campaignId/preview" element={<RecipientPreview />} />
           <Route path="logs" element={<NotificationLogs />} />
+          <Route path="staff/add" element={<AddStaff />} />
         </Route>
 
         {/* Catch all */}
