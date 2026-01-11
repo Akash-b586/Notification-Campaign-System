@@ -78,6 +78,11 @@ export const UserManagement: React.FC = () => {
   const canUpdate = hasPermission("users", "update");
   const canDelete = hasPermission("users", "delete");
 
+  const isValidPhone = (phone: string) => {
+    if (!phone) return true; // phone is optional
+    return /^[6-9]\d{9}$/.test(phone);
+  };
+
   const cities = [
     "Delhi",
     "Mumbai",
@@ -116,6 +121,11 @@ export const UserManagement: React.FC = () => {
     e.preventDefault();
     setError("");
 
+    if (!isValidPhone(formData.phone)) {
+      setError("Please enter a valid 10-digit phone number");
+      return;
+    }
+
     try {
       if (editingUser) {
         await userService.update(editingUser.user_id, {
@@ -150,7 +160,7 @@ export const UserManagement: React.FC = () => {
     setError("");
     try {
       let usersArray: any[] = [];
-      
+
       if (bulkType === "json") {
         const data = JSON.parse(bulkData);
         usersArray = data.users || data;
@@ -169,6 +179,14 @@ export const UserManagement: React.FC = () => {
         }
       }
 
+      for (const user of usersArray) {
+        if (!isValidPhone(user.phone)) {
+          throw new Error(
+            `Invalid phone number for user ${user.name || user.email}`
+          );
+        }
+      }
+
       const promises = usersArray.map((user) =>
         userService.create({
           name: user.name,
@@ -184,7 +202,9 @@ export const UserManagement: React.FC = () => {
       setBulkData("");
       fetchUsers();
     } catch (err: any) {
-      setError(err.message || "Invalid data format. Please check and try again.");
+      setError(
+        err.message || "Invalid data format. Please check and try again."
+      );
     }
   };
 
@@ -441,9 +461,12 @@ export const UserManagement: React.FC = () => {
             label="Phone"
             type="tel"
             value={formData.phone}
-            onChange={(e) =>
-              setFormData({ ...formData, phone: e.target.value })
-            }
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              setFormData({ ...formData, phone: value });
+            }}
+            maxLength={10}
+            placeholder="10-digit mobile number"
             disabled={!canUpdate && !!editingUser}
           />
           <Select

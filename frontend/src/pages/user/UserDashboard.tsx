@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, CheckCircle, Tag } from 'lucide-react';
-import { ToggleSwitch, Card, LoadingSpinner } from '../../components/ui';
-import { preferenceService } from '../../services/api';
+import React, { useState, useEffect } from "react";
+import { Bell, CheckCircle, Tag } from "lucide-react";
+import { ToggleSwitch, Card, LoadingSpinner } from "../../components/ui";
+import { preferenceService } from "../../services/api";
 
 interface NotificationPreference {
   offers: boolean;
@@ -16,8 +16,9 @@ export const UserDashboard: React.FC = () => {
     newsletter: false,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -29,58 +30,67 @@ export const UserDashboard: React.FC = () => {
       const prefsData = await preferenceService.get();
       setPreferences(prefsData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load data');
+      setError(err.message || "Failed to load data");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleToggle = async (type: keyof NotificationPreference) => {
-    const newValue = !preferences[type];
-    
-    setPreferences((prev) => ({ ...prev, [type]: newValue }));
 
-    try {
-      await preferenceService.update({ [type]: newValue });
-      setSuccessMessage('Preferences updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to update preferences');
-      setPreferences((prev) => ({ ...prev, [type]: !newValue })); // Revert
-    }
+const handleToggle = async (type: keyof NotificationPreference) => {
+  if (isSaving) return;
+
+  setIsSaving(true);
+  const updatedPreferences = {
+    ...preferences,
+    [type]: !preferences[type],
   };
+
+  setPreferences(updatedPreferences);
+
+  try {
+    await preferenceService.update(updatedPreferences);
+    setSuccessMessage("Preferences updated successfully!");
+    setError("");
+  } catch (err: any) {
+    setError(err.message || "Failed to update preferences");
+    setPreferences(preferences);
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const notificationTypes = [
     {
-      key: 'offers' as const,
-      title: 'Promotional Offers',
-      description: 'Get notified about special deals and discounts',
+      key: "offers" as const,
+      title: "Promotional Offers",
+      description: "Get notified about special deals and discounts",
       icon: <Tag className="w-5 h-5" />,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
     },
     {
-      key: 'order_updates' as const,
-      title: 'Order Updates',
-      description: 'Stay informed about your order status',
+      key: "order_updates" as const,
+      title: "Order Updates",
+      description: "Stay informed about your order status",
       icon: <CheckCircle className="w-5 h-5" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
     {
-      key: 'newsletter' as const,
-      title: 'Newsletter',
-      description: 'Receive our latest news and updates',
+      key: "newsletter" as const,
+      title: "Newsletter",
+      description: "Receive our latest news and updates",
       icon: <Bell className="w-5 h-5" />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: "text-green-600",
+      bgColor: "bg-green-50",
     },
   ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -90,10 +100,10 @@ export const UserDashboard: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Dashboard</h1>
-          <p className="text-gray-600">
-            Manage your notification preferences
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            My Dashboard
+          </h1>
+          <p className="text-gray-600">Manage your notification preferences</p>
         </div>
 
         {/* Success/Error Messages */}
@@ -117,7 +127,10 @@ export const UserDashboard: React.FC = () => {
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
             {notificationTypes.map((type) => (
-              <Card key={type.key} className="p-6 hover:shadow-lg transition-shadow">
+              <Card
+                key={type.key}
+                className="p-6 hover:shadow-lg transition-shadow"
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`p-3 rounded-xl ${type.bgColor}`}>
                     <div className={type.color}>{type.icon}</div>
@@ -127,7 +140,9 @@ export const UserDashboard: React.FC = () => {
                     onChange={() => handleToggle(type.key)}
                   />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{type.title}</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {type.title}
+                </h3>
                 <p className="text-sm text-gray-600">{type.description}</p>
               </Card>
             ))}

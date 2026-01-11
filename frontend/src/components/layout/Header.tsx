@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               <p className="text-sm font-medium text-gray-900">{user?.name}</p>
               <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-black border-2 font-semibold">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
           </div>

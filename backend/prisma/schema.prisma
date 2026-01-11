@@ -43,7 +43,7 @@ model Preference {
 }
 
 model SystemUser {
-  userId       String   @id @default(uuid())
+  userId   String   @id @default(uuid())
   name     String
   email    String   @unique
   password String

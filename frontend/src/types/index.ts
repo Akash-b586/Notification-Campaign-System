@@ -5,6 +5,7 @@ export interface User {
   user_id: string;
   name: string;
   email: string;
+  password?: string;
   phone?: string;
   city?: string;
   is_active: boolean;

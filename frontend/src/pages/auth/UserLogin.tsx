@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, Bell } from 'lucide-react';
+import { Mail, Lock, LogIn } from 'lucide-react';
 import { Button, Input } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/api';
@@ -12,6 +12,7 @@ export const UserLogin: React.FC = () => {
     email: '',
     password: '',
   });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,7 +29,7 @@ export const UserLogin: React.FC = () => {
         user_id: response.userId || '1',
         name: response.name || formData.email.split('@')[0],
         email: formData.email,
-        role: (response.role?.toLowerCase() || 'viewer') as const,
+        role: (response.role?.toLowerCase() || 'viewer'),
         userType: response.userType as 'END_USER' | 'SYSTEM_USER',
       };
 
@@ -41,6 +42,7 @@ export const UserLogin: React.FC = () => {
         navigate('/dashboard');
       }
     } catch (err: any) {
+      console.log(err);
       setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
@@ -48,12 +50,12 @@ export const UserLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-gray-900 via-primary-900 to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl mb-4">
-            <Bell className="w-8 h-8 text-primary-600" />
+          <div className="inline-flex items-center justify-center w-32 h-16 rounded-2xl mb-4">
+            <img src="/logo.png" alt="Logo" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-gray-300">Sign in to your account</p>
@@ -88,7 +90,7 @@ export const UserLogin: React.FC = () => {
               required
             />
 
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                 <span className="text-sm text-gray-600">Remember me</span>
@@ -96,7 +98,7 @@ export const UserLogin: React.FC = () => {
               <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                 Forgot password?
               </Link>
-            </div>
+            </div> */}
 
             <Button
               type="submit"

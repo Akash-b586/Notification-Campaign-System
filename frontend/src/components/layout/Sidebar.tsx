@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -8,8 +8,8 @@ import {
   FileText,
   LogOut,
   UserPlus,
-} from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+} from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -23,64 +23,69 @@ interface NavItem {
   permission?: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isMobileOpen,
+  onMobileClose,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, hasPermission } = useAuthStore();
 
   const navItems: NavItem[] = [
     {
-      path: '/dashboard',
-      label: 'Dashboard',
+      path: "/dashboard",
+      label: "Dashboard",
       icon: <LayoutDashboard className="w-5 h-5" />,
-      permission: 'dashboard',
+      permission: "dashboard",
     },
     {
-      path: '/users',
-      label: 'User Management',
+      path: "/users",
+      label: "User Management",
       icon: <Users className="w-5 h-5" />,
-      permission: 'users',
+      permission: "users",
     },
     {
-      path: '/preferences',
-      label: 'Preferences',
+      path: "/preferences",
+      label: "Preferences",
       icon: <Bell className="w-5 h-5" />,
-      permission: 'preferences',
+      permission: "preferences",
     },
     {
-      path: '/campaigns',
-      label: 'Campaigns',
+      path: "/campaigns",
+      label: "Campaigns",
       icon: <Megaphone className="w-5 h-5" />,
-      permission: 'campaigns',
+      permission: "campaigns",
     },
     {
-      path: '/staff/add',
-      label: 'Add Staff',
+      path: "/staff/add",
+      label: "Add Staff",
       icon: <UserPlus className="w-5 h-5" />,
-      permission: 'staff',
+      permission: "staff",
     },
     {
-      path: '/logs',
-      label: 'Notification Logs',
+      path: "/logs",
+      label: "Notification Logs",
       icon: <FileText className="w-5 h-5" />,
-      permission: 'logs',
+      permission: "logs",
     },
   ];
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const sidebarContent = (
-    <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className="h-full flex flex-col bg-linear-to-b from-slate-900 to-slate-800 text-white">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Bell className="w-7 h-7" />
-          NotifyCamp
-        </h1>
-        <p className="text-slate-200 text-sm mt-1">Campaign Manager</p>
+      <div className="p-6 border-b border-slate-700 flex flex-col items-center text-center">
+        <img
+          src="/logo.png"
+          alt="Campaign Manager Logo"
+          className="w-36 sm:w-40 md:w-44 h-auto mb-2"
+        />
+
+        <p className="text-slate-300 text-sm tracking-wide">Campaign Manager</p>
       </div>
 
       {/* User Info */}
@@ -99,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose })
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
-          if (item.permission && !hasPermission(item.permission, 'read')) {
+          if (item.permission && !hasPermission(item.permission, "read")) {
             return null;
           }
 
@@ -112,8 +117,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose })
               onClick={onMobileClose}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                 isActive
-                  ? 'bg-white text-slate-900 shadow-lg'
-                  : 'text-slate-100 hover:bg-slate-700/50'
+                  ? "bg-white text-slate-900 shadow-lg"
+                  : "text-slate-100 hover:bg-slate-700/50"
               }`}
             >
               {item.icon}

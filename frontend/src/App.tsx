@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from './components/layout';
 import { UserDashboardLayout } from './components/layout/UserDashboardLayout';
@@ -8,7 +7,7 @@ import { Dashboard } from './pages/dashboard';
 import { UserManagement } from './pages/users';
 import { NotificationPreferences } from './pages/preferences';
 import { CampaignList, CreateCampaign, RecipientPreview } from './pages/campaigns';
-import { NotificationLogs } from './pages/logs';
+// import { NotificationLogs } from './pages/logs';
 import { UserDashboard } from './pages/user';
 import { AddStaff } from './pages/staff';
 import { useAuthStore } from './store/authStore';
@@ -58,7 +57,7 @@ function App() {
           <Route path="campaigns/create" element={<CreateCampaign />} />
           <Route path="campaigns/:campaignId/edit" element={<CreateCampaign />} />
           <Route path="campaigns/:campaignId/preview" element={<RecipientPreview />} />
-          <Route path="logs" element={<NotificationLogs />} />
+          {/* <Route path="logs" element={<NotificationLogs />} /> */}
           <Route path="staff/add" element={<AddStaff />} />
         </Route>
 

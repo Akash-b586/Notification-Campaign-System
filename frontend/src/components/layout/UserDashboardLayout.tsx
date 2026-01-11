@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Bell, LogOut, Menu, X, LayoutDashboard } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import React, { useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { Bell, LogOut, Menu, X, LayoutDashboard } from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
 
 export const UserDashboardLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -10,23 +10,26 @@ export const UserDashboardLayout: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="hidden lg:block w-64 h-screen fixed left-0 top-0 z-30 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+      <aside className="hidden lg:block w-64 h-screen fixed left-0 top-0 z-30 bg-linear-to-b from-slate-900 to-slate-800 text-white">
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="p-6 border-b border-slate-700">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Bell className="w-7 h-7" />
-              NotifyCamp
-            </h1>
-            <p className="text-slate-300 text-sm mt-1">User Portal</p>
-          </div>
+          <div className="p-6 border-b border-slate-700 flex flex-col items-center text-center">
+            <img
+              src="/logo.png"
+              alt="Campaign Manager Logo"
+              className="w-36 sm:w-40 md:w-44 h-auto mb-2"
+            />
 
+            <p className="text-slate-300 text-sm tracking-wide">
+              User Portal
+            </p>
+          </div>
           {/* User Info */}
           <div className="px-6 py-4 bg-slate-800/50">
             <div className="flex items-center gap-3">
@@ -72,7 +75,11 @@ export const UserDashboardLayout: React.FC = () => {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg"
           >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
       </div>
@@ -84,7 +91,7 @@ export const UserDashboardLayout: React.FC = () => {
             className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <aside className="fixed left-0 top-0 w-64 h-screen z-50 lg:hidden bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+          <aside className="fixed left-0 top-0 w-64 h-screen z-50 lg:hidden bg-linear-to-b from-slate-900 to-slate-800 text-white">
             <div className="h-full flex flex-col">
               <div className="p-6 border-b border-slate-700 flex items-center justify-between">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
