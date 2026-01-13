@@ -61,6 +61,8 @@ export const previewCampaign = async (req: any, res: any) => {
         userId: true,
         email: true,
         city: true,
+        phone:true,
+        name:true,
       },
     });
 

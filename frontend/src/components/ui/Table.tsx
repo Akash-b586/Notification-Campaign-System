@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface Column<T> {
-  key: string;
+  key: keyof T;
   header: string | React.ReactNode;
   render?: (row: T) => React.ReactNode;
   width?: string;
@@ -27,7 +27,7 @@ export function Table<T extends Record<string, any>>({
           <tr>
             {columns.map((column) => (
               <th
-                key={column.key}
+                key={String(column.key)}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 style={{ width: column.width }}
               >
@@ -58,8 +58,8 @@ export function Table<T extends Record<string, any>>({
                 }`}
               >
                 {columns.map((column) => (
-                  <td key={column.key} className="px-6 py-4 whitespace-nowrap">
-                    {column.render ? column.render(row) : row[column.key]}
+                  <td key={String(column.key)} className="px-6 py-4 whitespace-nowrap">
+                    {column.render ? column.render(row) : String(row[column.key])}
                   </td>
                 ))}
               </tr>

@@ -6,8 +6,8 @@ const router = Router();
 
 router.post('/',authorize('ADMIN',"CREATOR"),createCampaign); // create campaign
 router.patch('/:id',authorize("ADMIN", "CREATOR"),updateCampaign); // update campaign
-router.post('/:id/preview',authorize("ADMIN", "CREATOR"),previewCampaign); // preview campaign 
 router.post('/:id/send',authorize("ADMIN", "CREATOR"),sendCampaign); // send campaign
+router.post('/:id/preview',authorize("ADMIN", "CREATOR","VIEWER"),previewCampaign); // preview campaign 
 
 router.get('/',authorize(),listCampaigns); // list campaigns
 router.get('/:id',authorize(),getCampaign); // get single campaign

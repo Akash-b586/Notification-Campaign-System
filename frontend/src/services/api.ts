@@ -93,6 +93,7 @@ export const campaignService = {
       const response = await axios.post(`${API_URL}/campaigns/${id}/preview`);
       return response.data;
     } catch (error: any) {
+      console.log(error);
       throw new Error(error.response?.data?.message || 'Failed to preview campaign');
     }
   },
@@ -217,6 +218,7 @@ export const userService = {
       const response = await axios.delete(`${API_URL}/users/${userId}`);
       return response.data;
     } catch (error: any) {
+      console.log(error);
       throw new Error(error.response?.data?.message || 'Failed to delete user');
     }
   },

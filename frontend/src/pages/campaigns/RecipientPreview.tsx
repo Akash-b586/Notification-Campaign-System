@@ -124,14 +124,14 @@ export const RecipientPreview: React.FC = () => {
 
   const columns = [
     {
-      key: 'user_id',
+      key: 'user_id' as const,
       header: 'User ID',
       render: (user: User) => (
         <span className="font-mono text-sm text-gray-600">{user.user_id}</span>
       ),
     },
     {
-      key: 'name',
+      key: 'name' as const,
       header: 'Name',
       render: (user: User) => (
         <div>
@@ -141,19 +141,19 @@ export const RecipientPreview: React.FC = () => {
       ),
     },
     {
-      key: 'phone',
+      key: 'phone' as const,
       header: 'Phone',
       render: (user: User) => <span className="text-gray-600">{user.phone || '-'}</span>,
     },
     {
-      key: 'city',
+      key: 'city' as const,
       header: 'City',
       render: (user: User) => <span className="text-gray-600">{user.city || '-'}</span>,
     },
     {
-      key: 'status',
+      key: 'is_active' as const,
       header: 'Status',
-      render: () => <Badge variant="success">Eligible</Badge>,
+      render: (user: User) => <Badge variant="success">Eligible</Badge>,
     },
   ];
 
@@ -203,7 +203,7 @@ export const RecipientPreview: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-primary-50 to-white">
+        <Card className="p-6 bg-linear-to-br from-primary-50 to-white">
           <div className="flex items-center gap-3 mb-2">
             <Users className="w-6 h-6 text-primary-600" />
             <h3 className="font-semibold text-gray-900">Eligible Recipients</h3>
@@ -213,7 +213,7 @@ export const RecipientPreview: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-white">
+        <Card className="p-6 bg-linear-to-br from-green-50 to-white">
           <div className="flex items-center gap-3 mb-2">
             <CheckCircle className="w-6 h-6 text-green-600" />
             <h3 className="font-semibold text-gray-900">Ready to Send</h3>
