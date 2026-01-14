@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { scheduleNewsletterPublish } from "../utils/scheduleSend";
 
 export const createNewsletter = async (req: any, res: any) => {
   try {
@@ -151,6 +152,7 @@ export const deleteNewsletter = async (req: any, res: any) => {
 export const publishNewsletter = async (req: any, res: any) => {
   try {
     const { newsletterId } = req.params;
+    const { scheduledAt } = req.body;
 
     const newsletter = await prisma.newsletter.findUnique({
       where: { id: newsletterId },
@@ -174,44 +176,26 @@ export const publishNewsletter = async (req: any, res: any) => {
       return res.status(400).json({ message: "Newsletter is not active" });
     }
 
-    if (newsletter.subscriptions.length === 0) {
-      return res.status(200).json({
-        message: "Newsletter has no subscribers",
-        publishCount: 0,
-      });
-    }
+    let delay = 0;
 
-    // Create notification logs for each subscriber and enabled channel
-    const logData: any[] = [];
-
-    for (const subscription of newsletter.subscriptions) {
-      const channels = ['EMAIL', 'SMS', 'PUSH'] as const;
-
-      for (const channel of channels) {
-        const isChannelEnabled = subscription[channel.toLowerCase() as keyof typeof subscription];
-        if (isChannelEnabled) {
-          logData.push({
-            userId: subscription.userId,
-            notificationType: 'NEWSLETTER',
-            channel,
-            status: 'SUCCESS',
-            newsletterId,
-          });
-        }
+    if (scheduledAt) {
+      delay = new Date(scheduledAt).getTime() - Date.now();
+      if (delay <= 0) {
+        return res.status(400).json({
+          message: "scheduledAt must be in the future",
+        });
       }
     }
 
-    if (logData.length > 0) {
-      await prisma.notificationLog.createMany({
-        data: logData,
-      });
-    }
+    await scheduleNewsletterPublish({ newsletterId }, delay);
 
     res.json({
-      message: "Newsletter published successfully",
-      publishCount: newsletter.subscriptions.length,
-      totalNotifications: logData.length,
-    });
+      message:
+        delay > 0
+          ? "Newsletter scheduled successfully"
+          : "Newsletter published successfully",
+      scheduledAt: scheduledAt || null,
+    })
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to publish newsletter" });

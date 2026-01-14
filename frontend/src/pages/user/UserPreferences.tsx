@@ -18,9 +18,14 @@ export const UserPreferences: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const prefsData = await preferenceService.getAllNotificationPreferences();
-      // prefsData should be { OFFERS: {...}, ORDER_UPDATES: {...}, NEWSLETTER: {...} }
-      setPreferences(prefsData);
+       const prefsArray = await preferenceService.getAllNotificationPreferences();
+      // Convert array to object keyed by notificationType
+      const prefsObject = prefsArray.reduce((acc: any, pref: any) => {
+        acc[pref.notificationType] = pref;
+        return acc;
+      }, {});
+      
+      setPreferences(prefsObject);
     } catch (err: any) {
       setError(err.message || "Failed to load data");
     } finally {
@@ -37,16 +42,20 @@ export const UserPreferences: React.FC = () => {
       ...preferences,
       [notificationType]: {
         ...currentPref,
-        [channel]: !currentPref?.[channel as keyof NotificationPreference],
+        [channel]: !currentPref?.[channel],
       },
     };
 
     setPreferences(updatedPreferences);
 
     try {
-      await preferenceService.updateNotificationPreferences(notificationType, {
-        ...updatedPreferences[notificationType],
-      });
+       const updateData = {
+        email: updatedPreferences[notificationType].email,
+        sms: updatedPreferences[notificationType].sms,
+        push: updatedPreferences[notificationType].push,
+      };
+      
+      await preferenceService.updateNotificationPreferences(notificationType, updateData);
       setSuccessMessage("Preferences updated successfully!");
       setError("");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -75,14 +84,14 @@ export const UserPreferences: React.FC = () => {
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
-    {
-      key: "NEWSLETTER" as const,
-      title: "Newsletter",
-      description: "Receive our latest news and updates",
-      icon: <Bell className="w-5 h-5" />,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
+    // {
+    //   key: "NEWSLETTER" as const,
+    //   title: "Newsletter",
+    //   description: "Receive our latest news and updates",
+    //   icon: <Bell className="w-5 h-5" />,
+    //   color: "text-green-600",
+    //   bgColor: "bg-green-50",
+    // },
   ];
 
   const channels: Array<{ key: 'email' | 'sms' | 'push'; label: string; icon: React.ReactNode }> = [

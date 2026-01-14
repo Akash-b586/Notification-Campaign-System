@@ -11,6 +11,7 @@ import {
 } from "../controllers/newsletter.controller";
 import { authorize } from "../middleware/authorize.middleware";
 
+
 const router = Router();
 
 // Public/User routes

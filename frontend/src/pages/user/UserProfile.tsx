@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Save, AlertCircle } from "lucide-react";
 import { Card, Button, Input, LoadingSpinner } from "../../components/ui";
 import { useAuthStore } from "../../store/authStore";
-import { userService } from "../../services/api";
+import { preferenceService } from "../../services/api";
 
 interface ProfileData {
   name: string;
@@ -13,6 +13,7 @@ interface ProfileData {
 
 export const UserProfile: React.FC = () => {
   const { user, login } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState<ProfileData>({
     name: "",
     email: "",
@@ -25,14 +26,26 @@ export const UserProfile: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        city: user.city || "",
-      });
+      fetchProfile();
     }
   }, [user]);
+
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    try {
+      const profileData = await preferenceService.getProfile();
+      setFormData({
+         name: profileData.name || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+        city: profileData.city || "",
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch profile data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,7 +68,7 @@ export const UserProfile: React.FC = () => {
       setError("Please enter a valid email address");
       return false;
     }
-    if (formData.phone && !/^[6-9]\d{9}$/.test(formData.phone)) {
+     if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
       setError("Please enter a valid 10-digit phone number");
       return false;
     }
@@ -85,7 +98,7 @@ export const UserProfile: React.FC = () => {
         city: formData.city || undefined,
       };
 
-      await userService.update(user.userId, updateData);
+      await preferenceService.updateProfile(updateData);
       
       // Update auth store with new user data
       login({
@@ -107,6 +120,14 @@ export const UserProfile: React.FC = () => {
     }
   };
 
+   if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <LoadingSpinner size="lg" text="Loading profile..." />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
@@ -123,11 +144,11 @@ export const UserProfile: React.FC = () => {
           {/* Profile Header */}
           <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
             <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
-              {user?.name?.charAt(0).toUpperCase()}
+              {formData?.name?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
-              <p className="text-gray-600">{user?.email}</p>
+              <h2 className="text-2xl font-bold text-gray-900">{formData?.name}</h2>
+              <p className="text-gray-600">{formData?.email}</p>
             </div>
           </div>
 

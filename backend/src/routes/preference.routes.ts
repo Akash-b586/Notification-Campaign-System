@@ -10,6 +10,7 @@ import {
   unsubscribeFromNewsletter,
   getAllUsersWithPreferences,
   updateUserNotificationPreference,
+  getMyNotificationLogs
 } from "../controllers/preference.controller";
 import { authorize } from "../middleware/authorize.middleware";
 import { authenticateUser } from "../middleware/auth.middleware";
@@ -24,6 +25,9 @@ router.put("/profile", authenticateUser, updateProfile);
 router.get("/notification-preferences/:notificationType", authenticateUser, getNotificationPreferences);
 router.put("/notification-preferences/:notificationType", authenticateUser, updateNotificationPreferences);
 router.get("/notification-preferences", authenticateUser, getAllNotificationPreferences);
+
+// User's notification logs
+router.get("/notification-logs", authenticateUser, getMyNotificationLogs);
 
 // Newsletter subscriptions
 router.get("/newsletters", authenticateUser, getNewsletterSubscriptions);

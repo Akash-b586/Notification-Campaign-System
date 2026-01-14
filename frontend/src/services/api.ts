@@ -98,9 +98,11 @@ export const campaignService = {
     }
   },
 
-  send: async (id: string) => {
+  send: async (id: string, options?: { scheduledAt?: string }) => {
     try {
-      const response = await axios.post(`${API_URL}/campaigns/${id}/send`);
+      const response = await axios.post(`${API_URL}/campaigns/${id}/send`, {
+        scheduledAt: options?.scheduledAt || null,
+      });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to send campaign');
@@ -172,6 +174,17 @@ export const preferenceService = {
     }
   },
 
+
+  getMyNotificationLogs: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/me/notification-logs`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch notification logs');
+    }
+  },
+
+  
   getNewsletterSubscriptions: async () => {
     try {
       const response = await axios.get(`${API_URL}/me/newsletters`);
@@ -341,9 +354,9 @@ export const newsletterService = {
     }
   },
 
-  publish: async (id: string) => {
+  publish: async (id: string, scheduledAt?: string) => {
     try {
-      const response = await axios.post(`${API_URL}/newsletters/${id}/publish`);
+      const response = await axios.post(`${API_URL}/newsletters/${id}/publish`, { scheduledAt });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to publish newsletter');

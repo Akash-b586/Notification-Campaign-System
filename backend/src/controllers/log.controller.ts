@@ -14,7 +14,20 @@ export const getNotificationLogs = async (req: any, res: any) => {
       include: {
         campaign: {
           select: {
+            id: true,
             campaignName: true,
+          },
+        },
+        newsletter: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
           },
         },
         user: {

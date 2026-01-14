@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Download, Filter } from "lucide-react";
+import { Search, Download } from "lucide-react";
 import {
   Button,
   Card,
@@ -9,14 +9,18 @@ import {
   LoadingSpinner,
   Select,
 } from "../../components/ui";
+import { preferenceService } from "../../services/api";
 
 interface Notification {
   id: string;
-  campaignName: string;
-  type: string;
-  message: string;
-  status: "delivered" | "failed" | "pending";
+  notificationType: string;
+  channel: string;
+  status: string;
   sentAt: string;
+  campaign?: {
+    campaignName: string;
+    notificationType: string;
+  };
 }
 
 export const UserNotifications: React.FC = () => {
@@ -29,98 +33,47 @@ export const UserNotifications: React.FC = () => {
   useEffect(() => {
     // Simulate loading with dummy data
     setTimeout(() => {
-      const dummyNotifications: Notification[] = [
-        {
-          id: "1",
-          campaignName: "Welcome Campaign",
-          type: "Newsletter",
-          message: "Welcome to NotifyCamp! We're excited to have you.",
-          status: "delivered",
-          sentAt: "2026-01-12T10:30:00Z",
-        },
-        {
-          id: "2",
-          campaignName: "New Year Sale",
-          type: "Offers",
-          message: "Get 50% off on all products this New Year!",
-          status: "delivered",
-          sentAt: "2026-01-11T14:20:00Z",
-        },
-        {
-          id: "3",
-          campaignName: "Order Shipped",
-          type: "Order Updates",
-          message: "Your order #ORD002 has been shipped and will arrive soon.",
-          status: "delivered",
-          sentAt: "2026-01-10T09:15:00Z",
-        },
-        {
-          id: "4",
-          campaignName: "Weekend Special",
-          type: "Offers",
-          message: "Exclusive weekend deals just for you!",
-          status: "delivered",
-          sentAt: "2026-01-09T16:45:00Z",
-        },
-        {
-          id: "5",
-          campaignName: "Order Delivered",
-          type: "Order Updates",
-          message: "Your order #ORD001 has been delivered successfully.",
-          status: "delivered",
-          sentAt: "2026-01-09T11:00:00Z",
-        },
-        {
-          id: "6",
-          campaignName: "Monthly Newsletter",
-          type: "Newsletter",
-          message: "Check out our January newsletter with tips and updates.",
-          status: "delivered",
-          sentAt: "2026-01-08T08:00:00Z",
-        },
-        {
-          id: "7",
-          campaignName: "Flash Sale Alert",
-          type: "Offers",
-          message: "24-hour flash sale starting now! Don't miss out.",
-          status: "delivered",
-          sentAt: "2026-01-07T18:30:00Z",
-        },
-        {
-          id: "8",
-          campaignName: "Order Confirmed",
-          type: "Order Updates",
-          message: "Your order #ORD003 has been confirmed and is being processed.",
-          status: "delivered",
-          sentAt: "2026-01-07T12:00:00Z",
-        },
-      ];
-      setNotifications(dummyNotifications);
-      setIsLoading(false);
+      fetchNotifications();
     }, 500);
   }, []);
 
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    try {
+      const logs = await preferenceService.getMyNotificationLogs();
+      setNotifications(logs);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredNotifications = notifications.filter((notif) => {
+    const campaignName = notif.campaign?.campaignName || `${notif.notificationType} notification`;
+    const type = notif.notificationType.replace('_', ' ');
+
     const matchesSearch =
-      notif.campaignName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notif.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notif.type.toLowerCase().includes(searchQuery.toLowerCase());
+      campaignName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notif.channel.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = !statusFilter || notif.status === statusFilter;
-    const matchesType = !typeFilter || notif.type === typeFilter;
+    const matchesType = !typeFilter || notif.notificationType === typeFilter;
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const handleDownloadCSV = () => {
     const csvContent = [
-      "ID,Campaign,Type,Message,Status,Sent At",
+      "ID,Campaign,Type,Channel,Status,Sent At",
       ...filteredNotifications.map((notif) =>
         [
           notif.id,
-          `"${notif.campaignName}"`,
-          notif.type,
-          `"${notif.message}"`,
+          `"${notif.campaign?.campaignName || `${notif.notificationType} notification`}"`,
+          notif.notificationType,
+          notif.channel,
           notif.status,
           notif.sentAt,
         ].join(",")
@@ -135,37 +88,35 @@ export const UserNotifications: React.FC = () => {
     a.click();
   };
 
-  const uniqueTypes = Array.from(new Set(notifications.map((n) => n.type)));
+  const uniqueTypes = Array.from(new Set(notifications.map((n) => n.notificationType)));
 
-  const getStatusVariant = (status: Notification["status"]) => {
-    switch (status) {
-      case "delivered":
-        return "success";
-      case "failed":
-        return "error";
-      case "pending":
-        return "warning";
-      default:
-        return "default";
-    }
+   const getStatusVariant = (status: string) => {
+    return status === "SUCCESS" ? "success" : "error";
   };
+
 
   const columns = [
     {
-      key: "campaignName",
-      header: "Campaign",
+      key: "campaign",
+      header: "Campaign / Type",
       render: (notif: Notification) => (
         <div>
-          <div className="font-medium text-gray-900">{notif.campaignName}</div>
-          <div className="text-sm text-gray-500">{notif.type}</div>
+           <div className="font-medium text-gray-900">
+            {notif.campaign?.campaignName || `${notif.notificationType} notification`}
+          </div>
+          <div className="text-sm text-gray-500">
+            {notif.notificationType.replace('_', ' ')} • {notif.channel}
+          </div>
         </div>
       ),
     },
     {
-      key: "message",
-      header: "Message",
+      key: "status",
+      header: "Status",
       render: (notif: Notification) => (
-        <span className="text-gray-600 line-clamp-2">{notif.message}</span>
+         <Badge variant={getStatusVariant(notif.status)}>
+          {notif.status.toLowerCase()}
+        </Badge>
       ),
     },
     {
@@ -222,21 +173,21 @@ export const UserNotifications: React.FC = () => {
           </p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-gray-600">Delivered</p>
+          <p className="text-sm text-gray-600">Successful</p>
           <p className="text-2xl font-bold text-green-600">
-            {notifications.filter((n) => n.status === "delivered").length}
+            {notifications.filter((n) => n.status === "SUCCESS").length}
           </p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-600">Offers</p>
           <p className="text-2xl font-bold text-purple-600">
-            {notifications.filter((n) => n.type === "Offers").length}
+            {notifications.filter((n) => n.notificationType === "OFFERS").length}
           </p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-600">Order Updates</p>
           <p className="text-2xl font-bold text-blue-600">
-            {notifications.filter((n) => n.type === "Order Updates").length}
+            {notifications.filter((n) => n.notificationType === "ORDER_UPDATES").length}
           </p>
         </Card>
       </div>
@@ -256,7 +207,10 @@ export const UserNotifications: React.FC = () => {
             <Select
               options={[
                 { value: "", label: "All Types" },
-                ...uniqueTypes.map((type) => ({ value: type, label: type })),
+                ...uniqueTypes.map((type) => ({ 
+                  value: type, 
+                  label: type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) 
+                })),
               ]}
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
@@ -264,9 +218,8 @@ export const UserNotifications: React.FC = () => {
             <Select
               options={[
                 { value: "", label: "All Status" },
-                { value: "delivered", label: "Delivered" },
-                { value: "failed", label: "Failed" },
-                { value: "pending", label: "Pending" },
+                 { value: "SUCCESS", label: "Success" },
+                { value: "FAILED", label: "Failed" },
               ]}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}

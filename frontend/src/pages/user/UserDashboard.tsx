@@ -11,7 +11,6 @@ import { preferenceService } from "../../services/api";
 
 interface DashboardStats {
   totalNotifications: number;
-  activeSubscriptions: number;
   lastNotification: {
     title: string;
     date: string;
@@ -20,16 +19,19 @@ interface DashboardStats {
 
 interface RecentNotification {
   id: string;
-  title: string;
-  type: string;
+  notificationType: string;
+  channel: string;
   status: string;
   sentAt: string;
+    campaign?: {
+    campaignName: string;
+    notificationType: string;
+  };
 }
 
 export const UserDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalNotifications: 0,
-    activeSubscriptions: 0,
     lastNotification: null,
   });
   const [recentNotifications, setRecentNotifications] = useState<
@@ -44,66 +46,26 @@ export const UserDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      // Fetch user preferences to calculate active subscriptions
-      const prefs = await preferenceService.getProfile();
-      const activeCount = [
-        prefs.offers,
-        prefs.order_updates,
-        prefs.newsletter,
-      ].filter(Boolean).length;
-
-      // Dummy data for notifications
-      const dummyNotifications: RecentNotification[] = [
-        {
-          id: "1",
-          title: "Welcome to NotifyCamp!",
-          type: "Newsletter",
-          status: "delivered",
-          sentAt: "2026-01-12T10:30:00Z",
-        },
-        {
-          id: "2",
-          title: "New Year Sale - 50% Off",
-          type: "Offers",
-          status: "delivered",
-          sentAt: "2026-01-11T14:20:00Z",
-        },
-        {
-          id: "3",
-          title: "Your order has been shipped",
-          type: "Order Updates",
-          status: "delivered",
-          sentAt: "2026-01-10T09:15:00Z",
-        },
-        {
-          id: "4",
-          title: "Weekend Special Deals",
-          type: "Offers",
-          status: "delivered",
-          sentAt: "2026-01-09T16:45:00Z",
-        },
-        {
-          id: "5",
-          title: "Monthly Newsletter - January",
-          type: "Newsletter",
-          status: "delivered",
-          sentAt: "2026-01-08T08:00:00Z",
-        },
-      ];
+      const logs = await preferenceService.getMyNotificationLogs();
 
       setStats({
-        totalNotifications: dummyNotifications.length,
-        activeSubscriptions: activeCount,
-        lastNotification: dummyNotifications[0]
+        totalNotifications: logs.length,
+        lastNotification: logs[0]
           ? {
-              title: dummyNotifications[0].title,
-              date: new Date(dummyNotifications[0].sentAt).toLocaleDateString(),
+              title: logs[0].campaign.campaignName || `${logs[0].notificationType} Notification`,
+              date: new Date(logs[0].sentAt).toLocaleDateString(),
             }
           : null,
       });
-      setRecentNotifications(dummyNotifications);
+      setRecentNotifications(logs.slice(0, 10));
     } catch (err: any) {
       console.error("Failed to load dashboard data:", err);
+      // Set empty state on error
+      setStats({
+        totalNotifications: 0,
+        lastNotification: null,
+      });
+      setRecentNotifications([]);
     } finally {
       setIsLoading(false);
     }
@@ -118,13 +80,6 @@ export const UserDashboard: React.FC = () => {
       bgColor: "bg-blue-50",
     },
     {
-      title: "Active Subscriptions",
-      value: `${stats.activeSubscriptions}/3`,
-      icon: <CheckCircle className="w-6 h-6" />,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
       title: "Last Notification",
       value: stats.lastNotification?.title || "No notifications",
       subtitle: stats.lastNotification?.date || "-",
@@ -136,12 +91,16 @@ export const UserDashboard: React.FC = () => {
 
   const columns = [
     {
-      key: "title",
+      key: "campaign",
       header: "Notification",
       render: (notif: RecentNotification) => (
         <div>
-          <div className="font-medium text-gray-900">{notif.title}</div>
-          <div className="text-sm text-gray-500">{notif.type}</div>
+         <div className="font-medium text-gray-900">
+            {notif.campaign?.campaignName || `${notif.notificationType} notification`}
+          </div>
+          <div className="text-sm text-gray-500">
+            {notif.notificationType.replace('_', ' ')} • {notif.channel}
+          </div>
         </div>
       ),
     },
@@ -150,9 +109,9 @@ export const UserDashboard: React.FC = () => {
       header: "Status",
       render: (notif: RecentNotification) => (
         <Badge
-          variant={notif.status === "delivered" ? "success" : "warning"}
+          variant={notif.status === "SUCCESS" ? "success" : "error"}
         >
-          {notif.status}
+          {notif.status.toLowerCase()}
         </Badge>
       ),
     },
@@ -165,6 +124,7 @@ export const UserDashboard: React.FC = () => {
         </span>
       ),
     },
+
   ];
 
   if (isLoading) {
@@ -186,7 +146,7 @@ export const UserDashboard: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 gap-6">
         {summaryCards.map((card, index) => (
           <Card key={index} className="p-6">
             <div className="flex items-start justify-between">

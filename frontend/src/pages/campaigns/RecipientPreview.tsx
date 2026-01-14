@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Download, Send, Users, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Download, Send, Users, CheckCircle, Calendar, Clock } from 'lucide-react';
 import {
   Button,
   Card,
@@ -8,6 +8,7 @@ import {
   Badge,
   LoadingSpinner,
   Modal,
+  Input,
 } from '../../components/ui';
 import { campaignService } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
@@ -24,6 +25,9 @@ export const RecipientPreview: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
+  const [sendType, setSendType] = useState<'immediate' | 'scheduled'>('immediate');
+  const [scheduledDateTime, setScheduledDateTime] = useState<string>('');
+  const [sendError, setSendError] = useState('');
 
   const canSend = hasPermission('campaigns', 'send');
   const canDownload = hasPermission('campaigns', 'download');
@@ -76,17 +80,33 @@ export const RecipientPreview: React.FC = () => {
   };
 
   const handleSend = async () => {
+    // Validate scheduled time if sending is scheduled
+    if (sendType === 'scheduled') {
+      if (!scheduledDateTime) {
+        setSendError('Please select a date and time for scheduling');
+        return;
+      }
+      
+      const scheduledDate = new Date(scheduledDateTime);
+      const now = new Date();
+      
+      if (scheduledDate <= now) {
+        setSendError('Scheduled time must be in the future');
+        return;
+      }
+    }
+
     setIsSending(true);
-    setError('');
+    setSendError('');
 
     try {
-      await campaignService.send(campaignId!);
+      const sendOptions = sendType === 'scheduled' ? { scheduledAt: scheduledDateTime } : {};
+      await campaignService.send(campaignId!, sendOptions);
       navigate('/campaigns');
     } catch (err: any) {
-      setError(err.message || 'Failed to send campaign');
+      setSendError(err.message || 'Failed to send campaign');
     } finally {
       setIsSending(false);
-      setShowConfirmModal(false);
     }
   };
 
@@ -253,11 +273,24 @@ export const RecipientPreview: React.FC = () => {
       {/* Confirmation Modal */}
       <Modal
         isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setSendError('');
+          setSendType('immediate');
+          setScheduledDateTime('');
+        }}
         title="Confirm Send Campaign"
         footer={
           <>
-            <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowConfirmModal(false);
+                setSendError('');
+                setSendType('immediate');
+                setScheduledDateTime('');
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -266,7 +299,7 @@ export const RecipientPreview: React.FC = () => {
               isLoading={isSending}
               icon={<Send className="w-5 h-5" />}
             >
-              Send to {eligibleUsers.length} Users
+              {sendType === 'scheduled' ? 'Schedule Campaign' : `Send to ${eligibleUsers.length} Users`}
             </Button>
           </>
         }
@@ -276,6 +309,82 @@ export const RecipientPreview: React.FC = () => {
             You are about to send <strong>{campaign?.campaignName || 'this campaign'}</strong> to{' '}
             <strong>{eligibleUsers.length} users</strong>.
           </p>
+
+          {/* Send Type Selection */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-900">Send Type</label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all" style={{borderColor: sendType === 'immediate' ? '#3b82f6' : '#e5e7eb', backgroundColor: sendType === 'immediate' ? '#eff6ff' : '#f9fafb'}}>
+                <input
+                  type="radio"
+                  name="sendType"
+                  value="immediate"
+                  checked={sendType === 'immediate'}
+                  onChange={(e) => {
+                    setSendType(e.target.value as 'immediate' | 'scheduled');
+                    setSendError('');
+                  }}
+                  className="w-4 h-4"
+                />
+                <div className="flex items-center gap-2">
+                  <Send className="w-4 h-4 text-blue-600" />
+                  <div>
+                    <div className="font-medium text-gray-900">Send Immediately</div>
+                    <div className="text-xs text-gray-500">Campaign will be sent right away</div>
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all" style={{borderColor: sendType === 'scheduled' ? '#3b82f6' : '#e5e7eb', backgroundColor: sendType === 'scheduled' ? '#eff6ff' : '#f9fafb'}}>
+                <input
+                  type="radio"
+                  name="sendType"
+                  value="scheduled"
+                  checked={sendType === 'scheduled'}
+                  onChange={(e) => {
+                    setSendType(e.target.value as 'immediate' | 'scheduled');
+                    setSendError('');
+                  }}
+                  className="w-4 h-4"
+                />
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-amber-600" />
+                  <div>
+                    <div className="font-medium text-gray-900">Schedule for Later</div>
+                    <div className="text-xs text-gray-500">Campaign will be sent at a specific time</div>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Scheduled DateTime Input */}
+          {sendType === 'scheduled' && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-900">Schedule Date & Time</label>
+              <Input
+                type="datetime-local"
+                value={scheduledDateTime}
+                onChange={(e) => {
+                  setScheduledDateTime(e.target.value);
+                  setSendError('');
+                }}
+                placeholder="Select date and time"
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                Select when you want this campaign to be sent. Must be a future date and time.
+              </p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {sendError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              {sendError}
+            </div>
+          )}
+
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-sm text-yellow-800">
               <strong>Note:</strong> This action cannot be undone. Make sure you have reviewed

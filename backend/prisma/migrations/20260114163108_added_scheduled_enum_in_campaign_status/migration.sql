@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Campaign` MODIFY `status` ENUM('DRAFT', 'SCHEDULED', 'SENT') NOT NULL DEFAULT 'DRAFT';

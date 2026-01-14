@@ -318,3 +318,31 @@ export const updateUserNotificationPreference = async (req: any, res: any) => {
     res.status(500).json({ message: "Failed to update preference" });
   }
 };
+
+// Get user's own notification logs
+export const getMyNotificationLogs = async (req: any, res: any) => {
+  try {
+    const userId = req.user?.userId;
+
+    const logs = await prisma.notificationLog.findMany({
+      where: { userId },
+      include: {
+        campaign: {
+          select: {
+            campaignName: true,
+            notificationType: true,
+          },
+        },
+      },
+      orderBy: {
+        sentAt: 'desc',
+      },
+      take: 50, // Limit to recent 50 logs
+    });
+
+    res.json(logs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch notification logs" });
+  }
+};

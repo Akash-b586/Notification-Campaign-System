@@ -99,7 +99,7 @@ export const getCampaignDistribution = async (req: any, res: any) => {
 
 export const getRecentActivity = async (req: any, res: any) => {
   try {
-    // Get recent notification logs with campaign and user info
+    // Get recent notification logs with campaign, newsletter, order and user info
     const recentLogs = await prisma.notificationLog.findMany({
       take: 10,
       orderBy: {
@@ -109,6 +109,16 @@ export const getRecentActivity = async (req: any, res: any) => {
         campaign: {
           select: {
             campaignName: true,
+          },
+        },
+        newsletter: {
+          select: {
+            title: true,
+          },
+        },
+        order: {
+          select: {
+            orderNumber: true,
           },
         },
         user: {
@@ -124,8 +134,17 @@ export const getRecentActivity = async (req: any, res: any) => {
       const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
       const timeStr = hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo} hours ago` : `${Math.floor(hoursAgo / 24)} days ago`;
 
+      let sourceName = '';
+      if (log.campaign) {
+        sourceName = log.campaign.campaignName;
+      } else if (log.newsletter) {
+        sourceName = log.newsletter.title;
+      } else if (log.order) {
+        sourceName = log.order.orderNumber;
+      }
+
       return {
-        action: `Notification sent for "${log.campaign.campaignName}"`,
+        action: `Notification sent for "${sourceName}"`,
         user: log.user.name,
         time: timeStr,
         type: log.status === 'SUCCESS' ? 'success' : 'error',

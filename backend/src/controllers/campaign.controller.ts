@@ -1,8 +1,9 @@
 import prisma from "../config/prisma";
+import { scheduleSend } from "../utils/scheduleSend";
 
 export const createCampaign = async (req: any, res: any) => {
   try {
-    const { campaignName, notificationType, cityFilter } = req.body;
+    const { campaignName, notificationType, cityFilter} = req.body;
 
     if (!campaignName || !notificationType) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -85,6 +86,7 @@ export const previewCampaign = async (req: any, res: any) => {
 export const sendCampaign = async (req: any, res: any) => {
   try {
     const campaignId = req.params.id;
+    const {scheduledAt} = req.body;
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
@@ -98,109 +100,39 @@ export const sendCampaign = async (req: any, res: any) => {
       return res.status(400).json({ message: "Campaign already sent" });
     }
 
-    // Get eligible users based on city filter and OFFERS notification preferences
-    const users = await prisma.user.findMany({
-      where: {
-        isActive: true,
-        ...(campaign.cityFilter && { city: campaign.cityFilter }),
-      },
-      select: { 
-        userId: true,
-        preferences: {
-          where: {
-            notificationType: 'OFFERS'
-          },
-          select: {
-            email: true,
-            sms: true,
-            push: true
-          }
-        }
+    let delay = 0;
+    let status : "SENT" | "SCHEDULED" = "SENT";
+
+    // Schedule the campaign send if scheduleAt is provided
+    if (scheduledAt) {
+      delay = new Date(scheduledAt).getTime() - new Date().getTime();
+      if (delay <= 0) {
+        return res.status(400).json({
+          message: "scheduledAt must be in the future",
+        });
+      }
+
+      status = "SCHEDULED";
+    }
+
+    await scheduleSend({ campaignId }, delay);
+
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        status,
+        ...(scheduledAt && { scheduledAt: new Date(scheduledAt) }),
       },
     });
-
-    if (users.length === 0) {
-      return res.status(200).json({
-        message: "No eligible users found",
-        sentCount: 0,
-      });
-    }
-
-    // Prepare recipient data
-    const recipientData = users.map((u) => ({
-      campaignId,
-      userId: u.userId,
-    }));
-
-    // Prepare notification log entries
-    // For each user, create one log entry per enabled channel
-    const logData: any[] = [];
-    const channels = ['EMAIL', 'SMS', 'PUSH'] as const;
-
-    for (const user of users) {
-      const prefs = user.preferences[0]; // Should only be one OFFERS preference
-      
-      if (!prefs) {
-        // No preference exists, treat as opt-in by default
-        for (const channel of channels) {
-          logData.push({
-            userId: user.userId,
-            notificationType: 'OFFERS',
-            channel,
-            status: 'SUCCESS',
-            campaignId,
-          });
-        }
-      } else {
-        // Create log for each enabled channel
-        if (prefs.email) {
-          logData.push({
-            userId: user.userId,
-            notificationType: 'OFFERS',
-            channel: 'EMAIL',
-            status: 'SUCCESS',
-            campaignId,
-          });
-        }
-        if (prefs.sms) {
-          logData.push({
-            userId: user.userId,
-            notificationType: 'OFFERS',
-            channel: 'SMS',
-            status: 'SUCCESS',
-            campaignId,
-          });
-        }
-        if (prefs.push) {
-          logData.push({
-            userId: user.userId,
-            notificationType: 'OFFERS',
-            channel: 'PUSH',
-            status: 'SUCCESS',
-            campaignId,
-          });
-        }
-      }
-    }
-
-    await prisma.$transaction([
-      prisma.campaignRecipient.createMany({
-        data: recipientData,
-        skipDuplicates: true,
-      }),
-      prisma.notificationLog.createMany({
-        data: logData,
-      }),
-      prisma.campaign.update({
-        where: { id: campaignId },
-        data: { status: "SENT" },
-      }),
-    ]);
 
     return res.json({
-      message: "Campaign sent successfully",
-      sentCount: users.length,
+      message:
+        delay > 0
+          ? "Campaign scheduled successfully"
+          : "Campaign sent successfully",
+      scheduledAt: scheduledAt || null,
     });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to send campaign" });

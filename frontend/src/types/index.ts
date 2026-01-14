@@ -99,6 +99,8 @@ export interface NotificationLog {
   // Expanded relationships from API
   user?: User;
   campaign?: Campaign;
+  order?: Order;
+  newsletter?: Newsletter;
 }
 
 // Dashboard Stats Types

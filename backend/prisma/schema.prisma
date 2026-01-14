@@ -28,6 +28,7 @@ enum NotificationType {
 
 enum CampaignStatus {
   DRAFT
+  SCHEDULED
   SENT
 }
 
@@ -124,6 +125,7 @@ model Campaign {
   notificationType NotificationType
   cityFilter       String?
   status           CampaignStatus   @default(DRAFT)
+  scheduledAt      DateTime?
 
   createdById String
   createdBy   User @relation("UserCampaigns", fields: [createdById], references: [userId])

@@ -96,7 +96,7 @@ export const UserDashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="hidden lg:block w-64 h-screen fixed left-0 top-0 z-30 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+      <aside className="hidden lg:block w-64 h-screen fixed left-0 top-0 z-30 bg-linear-to-b from-slate-900 to-slate-800 text-white">
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="p-6 border-b border-slate-700 flex flex-col items-center text-center">
@@ -113,7 +113,7 @@ export const UserDashboardLayout: React.FC = () => {
           {/* User Info */}
           <div className="px-6 py-4 bg-slate-800/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg font-semibold">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg font-semibold">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export const UserDashboardLayout: React.FC = () => {
             className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <aside className="fixed left-0 top-0 w-64 h-screen z-50 lg:hidden bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+          <aside className="fixed left-0 top-0 w-64 h-screen z-50 lg:hidden bg-linear-to-b from-slate-900 to-slate-800 text-white">
             <div className="h-full flex flex-col">
               <div className="p-6 border-b border-slate-700 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export const UserDashboardLayout: React.FC = () => {
 
               <div className="px-6 py-4 bg-slate-800/50">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg font-semibold">
+                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg font-semibold">
                     {user?.name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">

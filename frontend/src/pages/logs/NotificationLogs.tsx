@@ -50,6 +50,8 @@ export const NotificationLogs: React.FC = () => {
       log.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.campaign?.campaignName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.newsletter?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.order?.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.id.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = !statusFilter || log.status === statusFilter;
@@ -60,19 +62,40 @@ export const NotificationLogs: React.FC = () => {
 
   const handleDownloadCSV = () => {
     const csvContent = [
-      'Log ID,User ID,User Name,User Email,Campaign ID,Campaign Name,Sent At,Status',
-      ...filteredLogs.map((log) =>
-        [
+      'Log ID,User ID,User Name,User Email,Source Type,Source Name,Source ID,Channel,Notification Type,Sent At,Status',
+      ...filteredLogs.map((log) => {
+        let sourceType = '';
+        let sourceName = '';
+        let sourceId = '';
+
+        if (log.campaign && log.campaignId) {
+          sourceType = 'Campaign';
+          sourceName = log.campaign.campaignName;
+          sourceId = log.campaignId;
+        } else if (log.newsletter && log.newsletterId) {
+          sourceType = 'Newsletter';
+          sourceName = log.newsletter.title;
+          sourceId = log.newsletterId;
+        } else if (log.order && log.orderId) {
+          sourceType = 'Order';
+          sourceName = log.order.orderNumber;
+          sourceId = log.orderId;
+        }
+
+        return [
           log.id,
           log.userId,
           log.user?.name,
           log.user?.email,
-          log.campaignId,
-          log.campaign?.campaignName,
+          sourceType,
+          sourceName,
+          sourceId,
+          log.channel,
+          log.notificationType,
           log.sentAt,
           log.status,
-        ].join(',')
-      ),
+        ].join(',');
+      }),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -112,13 +135,33 @@ export const NotificationLogs: React.FC = () => {
     },
     {
       key: 'campaign',
-      header: 'Campaign',
-      render: (log: NotificationLog) => (
-        <div>
-          <div className="font-medium text-gray-900">{log.campaign?.campaignName}</div>
-          <div className="text-sm text-gray-500 font-mono">{log.campaignId}</div>
-        </div>
-      ),
+      header: 'Source',
+      render: (log: NotificationLog) => {
+        // Determine which source this log belongs to
+        if (log.campaign && log.campaignId) {
+          return (
+            <div>
+              <div className="font-medium text-gray-900">{log.campaign.campaignName}</div>
+              <div className="text-xs text-gray-500 font-mono">Campaign • {log.campaignId.slice(0, 8)}...</div>
+            </div>
+          );
+        } else if (log.newsletter && log.newsletterId) {
+          return (
+            <div>
+              <div className="font-medium text-gray-900">{log.newsletter.title}</div>
+              <div className="text-xs text-gray-500 font-mono">Newsletter • {log.newsletterId.slice(0, 8)}...</div>
+            </div>
+          );
+        } else if (log.order && log.orderId) {
+          return (
+            <div>
+              <div className="font-medium text-gray-900">{log.order.orderNumber}</div>
+              <div className="text-xs text-gray-500 font-mono">Order • {log.orderId.slice(0, 8)}...</div>
+            </div>
+          );
+        }
+        return <span className="text-gray-500">—</span>;
+      },
     },
     {
       key: 'sentAt',
