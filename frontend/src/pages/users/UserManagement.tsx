@@ -6,8 +6,6 @@ import {
   Trash2,
   Edit,
   Eye,
-  FileJson,
-  FileText,
 } from "lucide-react";
 import {
   Button,
@@ -22,6 +20,29 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { userService } from "../../services/api";
 import type { User } from "../../types";
+
+const generateRandomPassword = (length: number = 12): string => {
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*';
+  const allChars = uppercase + lowercase + numbers + symbols;
+  
+  let password = '';
+  // Ensure at least one of each type
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += symbols[Math.floor(Math.random() * symbols.length)];
+  
+  // Fill the rest randomly
+  for (let i = password.length; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+};
 
 export const UserManagement: React.FC = () => {
   const { hasPermission } = useAuthStore();
@@ -46,7 +67,6 @@ export const UserManagement: React.FC = () => {
   });
 
   const [bulkData, setBulkData] = useState("");
-  const [bulkType, setBulkType] = useState<"json" | "csv">("json");
 
   useEffect(() => {
     fetchUsers();
@@ -161,22 +181,43 @@ export const UserManagement: React.FC = () => {
     try {
       let usersArray: any[] = [];
 
-      if (bulkType === "json") {
-        const data = JSON.parse(bulkData);
-        usersArray = data.users || data;
-      } else {
-        // CSV parsing
-        const lines = bulkData.trim().split("\n");
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(",");
-          usersArray.push({
-            name: values[0],
-            email: values[1],
-            password: values[2],
-            phone: values[3],
-            city: values[4],
-          });
+      // CSV parsing (format: user_id,name,email,phone,city,is_active)
+      const lines = bulkData.trim().split("\n");
+      
+      // Validate CSV header
+      if (lines.length === 0) {
+        throw new Error("CSV file is empty");
+      }
+      
+      const expectedHeader = "user_id,name,email,phone,city,is_active";
+      const fileHeader = lines[0].trim().toLowerCase();
+
+      if (fileHeader !== expectedHeader) {
+        throw new Error(
+          "Invalid CSV format. Expected columns: user_id,name,email,phone,city,is_active"
+        );
+      }
+
+      // Parse CSV data rows
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue; // Skip empty lines
+        const values = line.split(",").map(v => v.trim());
+        
+        // Validate row has enough columns
+        if (values.length < 5) {
+          throw new Error(
+            `Invalid row ${i}: Expected at least 5 columns, found ${values.length}`
+          );
         }
+        
+        usersArray.push({
+          // Skip user_id (values[0]) - will be auto-generated
+          name: values[1],
+          email: values[2],
+          phone: values[3],
+          city: values[4],
+        });
       }
 
       for (const user of usersArray) {
@@ -191,7 +232,7 @@ export const UserManagement: React.FC = () => {
         userService.create({
           name: user.name,
           email: user.email,
-          password: user.password || "Password123!",
+          password: user.password || generateRandomPassword(),
           phone: user.phone,
           city: user.city,
         })
@@ -206,6 +247,30 @@ export const UserManagement: React.FC = () => {
         err.message || "Invalid data format. Please check and try again."
       );
     }
+  };
+
+  const handleCSVFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".csv")) {
+      setError("Please upload a valid CSV file");
+      return;
+    }
+
+    setError("");
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setBulkData(text); // same variable you already use
+    };
+
+    reader.onerror = () => {
+      setError("Failed to read the file. Please try again.");
+    };
+
+    reader.readAsText(file);
   };
 
   const handleDelete = async (userId: string) => {
@@ -498,54 +563,84 @@ export const UserManagement: React.FC = () => {
       {/* Bulk Upload Modal */}
       <Modal
         isOpen={isBulkModalOpen}
-        onClose={() => setIsBulkModalOpen(false)}
-        title="Bulk Upload Users"
+        onClose={() => {
+          setIsBulkModalOpen(false);
+          setError("");
+          setBulkData("");
+        }}
+        title="Bulk Upload Users (CSV)"
         size="lg"
         footer={
           <>
-            <Button variant="outline" onClick={() => setIsBulkModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsBulkModalOpen(false);
+              setError("");
+              setBulkData("");
+            }}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleBulkUpload}>
+            <Button variant="primary" onClick={handleBulkUpload} disabled={!bulkData}>
               Upload
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button
-              variant={bulkType === "json" ? "primary" : "outline"}
-              onClick={() => setBulkType("json")}
-              icon={<FileJson className="w-4 h-4" />}
-              size="sm"
-            >
-              JSON
-            </Button>
-            <Button
-              variant={bulkType === "csv" ? "primary" : "outline"}
-              onClick={() => setBulkType("csv")}
-              icon={<FileText className="w-4 h-4" />}
-              size="sm"
-            >
-              CSV
-            </Button>
-          </div>
+          {/* Error Message inside Modal */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Paste your {bulkType.toUpperCase()} data
+              Upload CSV file
             </label>
-            <textarea
-              className="w-full h-64 p-4 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder={
-                bulkType === "json"
-                  ? '{\n  "users": [\n    {\n      "user_id": "12345",\n      "name": "Amit",\n      "email": "amit@test.com",\n      "city": "Delhi"\n    }\n  ]\n}'
-                  : "user_id,name,email,phone,city,is_active\n12345,Amit,amit@test.com,9999999999,Delhi,true"
-              }
-              value={bulkData}
-              onChange={(e) => setBulkData(e.target.value)}
-            />
+            <div className="space-y-3">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleCSVFileUpload}
+                className="hidden"
+                id="csv-file-input"
+              />
+              <label 
+                htmlFor="csv-file-input"
+                className="block border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 hover:bg-gray-50 transition-all cursor-pointer"
+              >
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <span className="inline-block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                  Choose CSV File
+                </span>
+                <p className="text-sm text-gray-600 mt-3">
+                  or drag and drop your CSV file here
+                </p>
+              </label>
+              
+              {bulkData && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm text-green-700 font-medium">
+                    ✓ File loaded successfully
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    {bulkData.split("\n").filter(l => l.trim()).length} rows detected
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-blue-900 mb-2">
+                  CSV Format:
+                </p>
+                <p className="text-xs text-blue-800 font-mono">
+                  id,name,email,phone,city,is_active
+                </p>
+                <p className="text-xs text-blue-700 mt-2">
+                  A secure random password will be generated for each user
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </Modal>

@@ -129,7 +129,7 @@ export const preferenceService = {
 
   update: async (data: {
     offers?: boolean;
-    order_updates?: boolean;
+    orderUpdates?: boolean;
     newsletter?: boolean;
   }) => {
     try {

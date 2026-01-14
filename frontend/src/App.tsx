@@ -8,7 +8,14 @@ import { UserManagement } from './pages/users';
 import { NotificationPreferences } from './pages/preferences';
 import { CampaignList, CreateCampaign, RecipientPreview } from './pages/campaigns';
 import { NotificationLogs } from './pages/logs';
-import { UserDashboard } from './pages/user';
+import { 
+  UserDashboard, 
+  UserPreferences, 
+  UserOrders, 
+  CreateOrder, 
+  UserNotifications,
+  UserProfile 
+} from './pages/user';
 import { AddStaff } from './pages/staff';
 import { useAuthStore } from './store/authStore';
 
@@ -38,6 +45,11 @@ function App() {
           }
         >
           <Route index element={<UserDashboard />} />
+          <Route path="preferences" element={<UserPreferences />} />
+          <Route path="orders" element={<UserOrders />} />
+          <Route path="orders/new" element={<CreateOrder />} />
+          <Route path="notifications" element={<UserNotifications />} />
+          <Route path="profile" element={<UserProfile />} />
         </Route>
 
         {/* Admin/System User Dashboard (Protected) */}

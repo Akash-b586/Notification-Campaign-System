@@ -73,6 +73,8 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   userType?: 'END_USER' | 'SYSTEM_USER';
+  phone?: string;
+  city?: string;
   token?: string;
 }
 

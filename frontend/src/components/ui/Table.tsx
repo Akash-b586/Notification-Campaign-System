@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface Column<T> {
-  key: keyof T;
+  key: keyof T | string;
   header: string | React.ReactNode;
   render?: (row: T) => React.ReactNode;
   width?: string;

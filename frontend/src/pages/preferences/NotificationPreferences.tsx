@@ -29,7 +29,9 @@ export const NotificationPreferences: React.FC = () => {
   const [error, setError] = useState('');
   const [changedUsers, setChangedUsers] = useState<Map<string, any>>(new Map());
 
-  const canUpdate = hasPermission('preferences', 'update');
+  // Admin and creators can only view preferences, not edit them
+  // Users can edit their own preferences in the user dashboard
+  const canUpdate = false;
 
   useEffect(() => {
     fetchUsers();
@@ -55,7 +57,7 @@ export const NotificationPreferences: React.FC = () => {
   ) => {
     setUsers((prev) =>
       prev.map((user) => {
-        if (user.userId === userId && user.preference) {
+        if (user.user_id === userId && user.preference) {
           return {
             ...user,
             preference: {
@@ -122,7 +124,7 @@ export const NotificationPreferences: React.FC = () => {
           <ToggleSwitch
             checked={user.preference?.offers || false}
             onChange={(value) =>
-              handlePreferenceChange(user.userId, 'offers', value)
+              handlePreferenceChange(user.user_id, 'offers', value)
             }
             disabled={!canUpdate || !user.preference}
           />
@@ -142,7 +144,7 @@ export const NotificationPreferences: React.FC = () => {
           <ToggleSwitch
             checked={user.preference?.orderUpdates || false}
             onChange={(value) =>
-              handlePreferenceChange(user.userId, 'orderUpdates', value)
+              handlePreferenceChange(user.user_id, 'orderUpdates', value)
             }
             disabled={!canUpdate || !user.preference}
           />
@@ -162,7 +164,7 @@ export const NotificationPreferences: React.FC = () => {
           <ToggleSwitch
             checked={user.preference?.newsletter || false}
             onChange={(value) =>
-              handlePreferenceChange(user.userId, 'newsletter', value)
+              handlePreferenceChange(user.user_id, 'newsletter', value)
             }
             disabled={!canUpdate || !user.preference}
           />
@@ -286,12 +288,9 @@ export const NotificationPreferences: React.FC = () => {
         />
       </Card>
 
-      {!canUpdate && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
-          <p className="font-medium">Read-only mode</p>
-          <p>You don't have permission to update preferences.</p>
-        </div>
-      )}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
+        <p className="font-medium">📋 View-Only Access</p>
+      </div>
     </div>
   );
 };
