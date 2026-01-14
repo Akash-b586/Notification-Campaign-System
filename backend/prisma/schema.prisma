@@ -13,87 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  userId   String  @id @default(uuid())
-  name     String
-  email    String? @unique
-  password String
-  phone    String?
-  city     String?
-  isActive Boolean @default(true)
-
-  preference Preference?
-  recipients CampaignRecipient[]
-  logs       NotificationLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Preference {
-  id           String  @id @default(uuid())
-  userId       String  @unique
-  offers       Boolean @default(true)
-  orderUpdates Boolean @default(true)
-  newsletter   Boolean @default(true)
-
-  user User @relation(fields: [userId], references: [userId],onDelete: Cascade)
-
-  updatedAt DateTime @updatedAt
-}
-
-model SystemUser {
-  userId   String   @id @default(uuid())
-  name     String
-  email    String   @unique
-  password String
-  role     RoleType
-
-  createdAt DateTime   @default(now())
-  createdCampaigns Campaign[] @relation("SystemUserCampaigns")
-}
-
-model Campaign {
-  id               String           @id @default(uuid())
-  campaignName     String
-  notificationType NotificationType
-  cityFilter       String?
-  status           CampaignStatus   @default(DRAFT)
-
-  createdById String
-  createdBy   SystemUser @relation("SystemUserCampaigns",fields: [createdById], references: [userId])
-
-  recipients CampaignRecipient[]
-  logs       NotificationLog[]
-
-  createdAt DateTime @default(now())
-}
-
-model CampaignRecipient {
-  id         String @id @default(uuid())
-  campaignId String
-  userId     String 
-  campaign Campaign @relation(fields: [campaignId], references: [id],onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [userId],onDelete: Cascade)
-
-  @@unique([campaignId, userId])
-}
-
-model NotificationLog {
-  id         String     @id @default(uuid())
-  campaignId String
-  userId     String
-  sentAt     DateTime   @default(now())
-  status     SendStatus
-
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-}
-
 enum RoleType {
   ADMIN
   CREATOR
   VIEWER
+  CUSTOMER
 }
 
 enum NotificationType {
@@ -110,4 +34,144 @@ enum CampaignStatus {
 enum SendStatus {
   SUCCESS
   FAILED
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum OrderStatus {
+  CREATED
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  userId   String  @id @default(uuid())
+  name     String
+  email    String? @unique
+  password String
+  phone    String?
+  city     String?
+  isActive Boolean @default(true)
+  role     RoleType @default(CUSTOMER)
+
+  preferences             NotificationPreference[]
+  recipients              CampaignRecipient[]
+  orders                  Order[]
+  logs                    NotificationLog[]
+  campaigns               Campaign[] @relation("UserCampaigns")
+  newsletterSubscriptions NewsletterSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationPreference {
+  id               String           @id @default(uuid())
+  userId           String
+  notificationType NotificationType
+
+  email Boolean @default(true)
+  sms   Boolean @default(true)
+  push  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, notificationType])
+}
+
+model Newsletter {
+  id          String  @id @default(uuid())
+  slug        String  @unique
+  title       String
+  description String?
+  isActive    Boolean @default(true)
+
+  subscriptions NewsletterSubscription[]
+  logs          NotificationLog[]
+
+  createdAt DateTime @default(now())
+}
+
+model NewsletterSubscription {
+  id           String @id @default(uuid())
+  userId       String
+  newsletterId String
+
+  email Boolean @default(true)
+  sms   Boolean @default(false)
+  push  Boolean @default(false)
+
+  user       User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  newsletter Newsletter @relation(fields: [newsletterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, newsletterId])
+}
+
+model Campaign {
+  id               String           @id @default(uuid())
+  campaignName     String
+  notificationType NotificationType
+  cityFilter       String?
+  status           CampaignStatus   @default(DRAFT)
+
+  createdById String
+  createdBy   User @relation("UserCampaigns", fields: [createdById], references: [userId])
+
+  recipients CampaignRecipient[]
+  logs       NotificationLog[]
+
+  createdAt DateTime @default(now())
+}
+
+model CampaignRecipient {
+  id         String @id @default(uuid())
+  campaignId String
+  userId     String
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique
+  userId      String
+  status      OrderStatus @default(CREATED)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  logs NotificationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationLog {
+  id               String              @id @default(uuid())
+  userId           String
+  notificationType NotificationType
+  channel          NotificationChannel
+  status           SendStatus
+  sentAt           DateTime            @default(now())
+
+  campaignId   String?
+  orderId      String?
+  newsletterId String?
+
+  user       User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  campaign   Campaign?   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  order      Order?      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  newsletter Newsletter? @relation(fields: [newsletterId], references: [id], onDelete: Cascade)
 }

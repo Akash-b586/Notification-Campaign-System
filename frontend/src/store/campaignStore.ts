@@ -35,14 +35,14 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   updateCampaign: (campaignId: string, data: Partial<Campaign>) => {
     set((state) => ({
       campaigns: state.campaigns.map((campaign) =>
-        campaign.campaign_id === campaignId ? { ...campaign, ...data } : campaign
+        campaign.id === campaignId ? { ...campaign, ...data } : campaign
       ),
     }));
   },
 
   deleteCampaign: (campaignId: string) => {
     set((state) => ({
-      campaigns: state.campaigns.filter((campaign) => campaign.campaign_id !== campaignId),
+      campaigns: state.campaigns.filter((campaign) => campaign.id !== campaignId),
     }));
   },
 
@@ -65,8 +65,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     if (filters.search) {
       const search = filters.search.toLowerCase();
       filtered = filtered.filter((campaign) =>
-        campaign.campaign_name.toLowerCase().includes(search) ||
-        campaign.campaign_id.toLowerCase().includes(search)
+        campaign.campaignName.toLowerCase().includes(search) ||
+        campaign.id.toLowerCase().includes(search)
       );
     }
 
@@ -74,9 +74,9 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       filtered = filtered.filter((campaign) => campaign.status === filters.status);
     }
 
-    if (filters.notification_type) {
+    if (filters.notificationType) {
       filtered = filtered.filter(
-        (campaign) => campaign.notification_type === filters.notification_type
+        (campaign) => campaign.notificationType === filters.notificationType
       );
     }
 

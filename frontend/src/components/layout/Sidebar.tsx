@@ -8,6 +8,8 @@ import {
   FileText,
   LogOut,
   UserPlus,
+  Mail,
+  ShoppingCart,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
@@ -55,6 +57,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Campaigns",
       icon: <Megaphone className="w-5 h-5" />,
       permission: "campaigns",
+    },
+    {
+      path: "/orders",
+      label: "Orders",
+      icon: <ShoppingCart className="w-5 h-5" />,
+      permission: "orders",
+    },
+    {
+      path: "/newsletters",
+      label: "Newsletters",
+      icon: <Mail className="w-5 h-5" />,
+      permission: "newsletters",
     },
     {
       path: "/staff/add",
@@ -108,7 +122,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return null;
           }
 
-          const isActive = location.pathname === item.path;
+          const isActive =
+            location.pathname === item.path ||
+            location.pathname.startsWith(item.path + "/");
 
           return (
             <Link

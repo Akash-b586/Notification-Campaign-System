@@ -5,6 +5,16 @@ import { hashPassword } from "../utils/hash";
 export const getAllUsers = async (req: any, res: any) => {
   try {
     const users = await prisma.user.findMany({
+      select: {
+        userId: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
       orderBy: { name: 'asc' },
     });
 
@@ -21,6 +31,18 @@ export const getUser = async (req: any, res: any) => {
 
     const user = await prisma.user.findUnique({
       where: { userId },
+      select: {
+        userId: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        preferences: true,
+        orders: true,
+      },
     });
 
     if (!user) {
@@ -36,7 +58,7 @@ export const getUser = async (req: any, res: any) => {
 
 export const createUser = async (req: any, res: any) => {
   try {
-    const { name, email, password, phone, city } = req.body;
+    const { name, email, password, phone, city, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -60,17 +82,18 @@ export const createUser = async (req: any, res: any) => {
         password: hashedPassword,
         phone,
         city,
+        role: role || "CUSTOMER",
         isActive: true,
-        preference: {
-          create: {
-            offers: true,
-            orderUpdates: true,
-            newsletter: true,
-          },
-        },
       },
-      include: {
-        preference: true,
+      select: {
+        userId: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
       },
     });
 
@@ -84,7 +107,7 @@ export const createUser = async (req: any, res: any) => {
 export const updateUser = async (req: any, res: any) => {
   try {
     const { userId } = req.params;
-    const { name, email, phone, city, isActive } = req.body;
+    const { name, email, phone, city, isActive, role } = req.body;
 
     const user = await prisma.user.findUnique({
       where: { userId },
@@ -102,6 +125,17 @@ export const updateUser = async (req: any, res: any) => {
         ...(phone !== undefined && { phone }),
         ...(city !== undefined && { city }),
         ...(isActive !== undefined && { isActive }),
+        ...(role && { role }),
+      },
+      select: {
+        userId: true,
+        name: true,
+        email: true,
+        phone: true,
+        city: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
       },
     });
 

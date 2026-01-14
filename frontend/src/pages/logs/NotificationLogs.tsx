@@ -37,19 +37,7 @@ export const NotificationLogs: React.FC = () => {
         ...(campaignFilter && { campaignId: campaignFilter }),
       });
 
-      // Map backend format to frontend format
-      const mappedLogs: NotificationLog[] = data.map((log: any) => ({
-        log_id: log.id,
-        user_id: log.userId,
-        campaign_id: log.campaignId,
-        campaign_name: log.campaign?.campaignName || 'Unknown Campaign',
-        user_name: log.user?.name || 'Unknown User',
-        user_email: log.user?.email || 'No email',
-        sent_at: log.sentAt,
-        status: log.status.toLowerCase(),
-      }));
-
-      setLogs(mappedLogs);
+      setLogs(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load logs');
     } finally {
@@ -59,13 +47,13 @@ export const NotificationLogs: React.FC = () => {
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =
-      log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.campaign_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.log_id.toLowerCase().includes(searchQuery.toLowerCase());
+      log.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.campaign?.campaignName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.id.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = !statusFilter || log.status === statusFilter;
-    const matchesCampaign = !campaignFilter || log.campaign_id === campaignFilter;
+    const matchesCampaign = !campaignFilter || log.campaignId === campaignFilter;
 
     return matchesSearch && matchesStatus && matchesCampaign;
   });
@@ -75,13 +63,13 @@ export const NotificationLogs: React.FC = () => {
       'Log ID,User ID,User Name,User Email,Campaign ID,Campaign Name,Sent At,Status',
       ...filteredLogs.map((log) =>
         [
-          log.log_id,
-          log.user_id,
-          log.user_name,
-          log.user_email,
-          log.campaign_id,
-          log.campaign_name,
-          log.sent_at,
+          log.id,
+          log.userId,
+          log.user?.name,
+          log.user?.email,
+          log.campaignId,
+          log.campaign?.campaignName,
+          log.sentAt,
           log.status,
         ].join(',')
       ),
@@ -95,21 +83,21 @@ export const NotificationLogs: React.FC = () => {
     a.click();
   };
 
-  const uniqueCampaigns = Array.from(new Set(logs.map((l) => l.campaign_id))).map((id) => {
-    const log = logs.find((l) => l.campaign_id === id);
-    return { value: id, label: log?.campaign_name || id };
+  const uniqueCampaigns = Array.from(new Set(logs.map((l) => l.campaignId).filter(Boolean))).map((id) => {
+    const log = logs.find((l) => l.campaignId === id);
+    return { value: id || '', label: log?.campaign?.campaignName || id || 'Unknown' };
   });
 
-  const successCount = logs.filter((l) => l.status === 'success').length;
-  const failedCount = logs.filter((l) => l.status === 'failed').length;
+  const successCount = logs.filter((l) => l.status === 'SUCCESS').length;
+  const failedCount = logs.filter((l) => l.status === 'FAILED').length;
   const successRate = logs.length > 0 ? ((successCount / logs.length) * 100).toFixed(1) : '0';
 
   const columns = [
     {
-      key: 'log_id',
+      key: 'id',
       header: 'Log ID',
       render: (log: NotificationLog) => (
-        <span className="font-mono text-sm text-gray-600">{log.log_id}</span>
+        <span className="font-mono text-sm text-gray-600">{log.id}</span>
       ),
     },
     {
@@ -117,8 +105,8 @@ export const NotificationLogs: React.FC = () => {
       header: 'User',
       render: (log: NotificationLog) => (
         <div>
-          <div className="font-medium text-gray-900">{log.user_name}</div>
-          <div className="text-sm text-gray-500">{log.user_email}</div>
+          <div className="font-medium text-gray-900">{log.user?.name}</div>
+          <div className="text-sm text-gray-500">{log.user?.email}</div>
         </div>
       ),
     },
@@ -127,21 +115,21 @@ export const NotificationLogs: React.FC = () => {
       header: 'Campaign',
       render: (log: NotificationLog) => (
         <div>
-          <div className="font-medium text-gray-900">{log.campaign_name}</div>
-          <div className="text-sm text-gray-500 font-mono">{log.campaign_id}</div>
+          <div className="font-medium text-gray-900">{log.campaign?.campaignName}</div>
+          <div className="text-sm text-gray-500 font-mono">{log.campaignId}</div>
         </div>
       ),
     },
     {
-      key: 'sent_at',
+      key: 'sentAt',
       header: 'Sent At',
       render: (log: NotificationLog) => (
         <div>
           <div className="text-sm text-gray-900">
-            {new Date(log.sent_at).toLocaleDateString()}
+            {new Date(log.sentAt).toLocaleDateString()}
           </div>
           <div className="text-xs text-gray-500">
-            {new Date(log.sent_at).toLocaleTimeString()}
+            {new Date(log.sentAt).toLocaleTimeString()}
           </div>
         </div>
       ),
@@ -150,7 +138,7 @@ export const NotificationLogs: React.FC = () => {
       key: 'status',
       header: 'Status',
       render: (log: NotificationLog) => (
-        <Badge variant={log.status === 'success' ? 'success' : 'error'}>
+        <Badge variant={log.status === 'SUCCESS' ? 'success' : 'error'}>
           {log.status}
         </Badge>
       ),
@@ -231,8 +219,8 @@ export const NotificationLogs: React.FC = () => {
             <Select
               options={[
                 { value: '', label: 'All Status' },
-                { value: 'success', label: 'Success' },
-                { value: 'failed', label: 'Failed' },
+                { value: 'SUCCESS', label: 'Success' },
+                { value: 'FAILED', label: 'Failed' },
               ]}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}

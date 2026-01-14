@@ -37,18 +37,7 @@ export const CampaignList: React.FC = () => {
     setError('');
     try {
       const data = await campaignService.list();
-      // Map backend response to frontend format
-      const mappedCampaigns: Campaign[] = data.map((c: any) => ({
-        campaign_id: c.id,
-        campaign_name: c.campaignName,
-        notification_type: c.notificationType.toLowerCase(),
-        city_filter: c.cityFilter,
-        created_by: c.createdById,
-        status: c.status.toLowerCase(),
-        created_at: c.createdAt,
-        recipient_count: 0, // Will be fetched separately if needed
-      }));
-      setCampaigns(mappedCampaigns);
+      setCampaigns(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load campaigns');
     } finally {
@@ -58,22 +47,22 @@ export const CampaignList: React.FC = () => {
 
   const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch =
-      campaign.campaign_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      campaign.campaign_id.toLowerCase().includes(searchQuery.toLowerCase());
+      campaign.campaignName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      campaign.id.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = !statusFilter || campaign.status === statusFilter;
-    const matchesType = !typeFilter || campaign.notification_type === typeFilter;
+    const matchesType = !typeFilter || campaign.notificationType === typeFilter;
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const getNotificationTypeColor = (type: string) => {
     switch (type) {
-      case 'offers':
+      case 'OFFERS':
         return 'badge-warning';
-      case 'order_updates':
+      case 'ORDER_UPDATES':
         return 'badge-info';
-      case 'newsletter':
+      case 'NEWSLETTER':
         return 'badge-success';
       default:
         return 'badge-draft';
@@ -82,55 +71,55 @@ export const CampaignList: React.FC = () => {
 
   const columns = [
     {
-      key: 'campaign_id',
+      key: 'id',
       header: 'Campaign ID',
       render: (campaign: Campaign) => (
-        <span className="font-mono text-sm text-gray-600">{campaign.campaign_id}</span>
+        <span className="font-mono text-sm text-gray-600">{campaign.id}</span>
       ),
     },
     {
-      key: 'campaign_name',
+      key: 'campaignName',
       header: 'Campaign Name',
       render: (campaign: Campaign) => (
         <div>
-          <div className="font-medium text-gray-900">{campaign.campaign_name}</div>
+          <div className="font-medium text-gray-900">{campaign.campaignName}</div>
           <div className="text-sm text-gray-500">
-            Created {new Date(campaign.created_at!).toLocaleDateString()}
+            Created {new Date(campaign.createdAt!).toLocaleDateString()}
           </div>
         </div>
       ),
     },
     {
-      key: 'notification_type',
+      key: 'notificationType',
       header: 'Type',
       render: (campaign: Campaign) => (
-        <Badge className={getNotificationTypeColor(campaign.notification_type)}>
-          {campaign.notification_type.replace('_', ' ')}
+        <Badge className={getNotificationTypeColor(campaign.notificationType)}>
+          {campaign.notificationType.replace('_', ' ')}
         </Badge>
       ),
     },
     {
-      key: 'city_filter',
+      key: 'cityFilter',
       header: 'Target City',
       render: (campaign: Campaign) => (
-        <span className="text-gray-600">{campaign.city_filter || 'All Cities'}</span>
+        <span className="text-gray-600">{campaign.cityFilter || 'All Cities'}</span>
       ),
     },
     {
       key: 'status',
       header: 'Status',
       render: (campaign: Campaign) => (
-        <Badge variant={campaign.status === 'sent' ? 'success' : 'draft'}>
+        <Badge variant={campaign.status === 'SENT' ? 'success' : 'draft'}>
           {campaign.status}
         </Badge>
       ),
     },
     {
-      key: 'recipient_count',
+      key: 'recipientCount',
       header: 'Recipients',
       render: (campaign: Campaign) => (
         <span className="font-medium text-gray-900">
-          {campaign.recipient_count || '-'}
+          {campaign.recipientCount || '-'}
         </span>
       ),
     },
@@ -140,24 +129,24 @@ export const CampaignList: React.FC = () => {
       render: (campaign: Campaign) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate(`/campaigns/${campaign.campaign_id}/preview`)}
+            onClick={() => navigate(`/campaigns/${campaign.id}/preview`)}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             title="Preview Recipients"
           >
             <Eye className="w-4 h-4" />
           </button>
-          {campaign.status === 'draft' && canUpdate && (
+          {campaign.status === 'DRAFT' && canUpdate && (
             <button
-              onClick={() => navigate(`/campaigns/${campaign.campaign_id}/edit`)}
+              onClick={() => navigate(`/campaigns/${campaign.id}/edit`)}
               className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
               title="Edit Campaign"
             >
               <Edit className="w-4 h-4" />
             </button>
           )}
-          {campaign.status === 'sent' && (
+          {campaign.status === 'SENT' && (
             <button
-              onClick={() => navigate(`/logs?campaign=${campaign.campaign_id}`)}
+              onClick={() => navigate(`/logs?campaign=${campaign.id}`)}
               className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
               title="View Logs"
             >
@@ -213,19 +202,19 @@ export const CampaignList: React.FC = () => {
         <Card className="p-6">
           <div className="text-sm text-gray-600 mb-1">Sent</div>
           <div className="text-3xl font-bold text-green-600">
-            {campaigns.filter((c) => c.status === 'sent').length}
+            {campaigns.filter((c) => c.status === 'SENT').length}
           </div>
         </Card>
         <Card className="p-6">
           <div className="text-sm text-gray-600 mb-1">Drafts</div>
           <div className="text-3xl font-bold text-gray-600">
-            {campaigns.filter((c) => c.status === 'draft').length}
+            {campaigns.filter((c) => c.status === 'DRAFT').length}
           </div>
         </Card>
         <Card className="p-6">
           <div className="text-sm text-gray-600 mb-1">Total Recipients</div>
           <div className="text-3xl font-bold text-primary-600">
-            {campaigns.reduce((sum, c) => sum + (c.recipient_count || 0), 0)}
+            {campaigns.reduce((sum, c) => sum + (c.recipientCount || 0), 0)}
           </div>
         </Card>
       </div>
@@ -245,8 +234,8 @@ export const CampaignList: React.FC = () => {
             <Select
               options={[
                 { value: '', label: 'All Status' },
-                { value: 'draft', label: 'Draft' },
-                { value: 'sent', label: 'Sent' },
+                { value: 'DRAFT', label: 'Draft' },
+                { value: 'SENT', label: 'Sent' },
               ]}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -254,9 +243,9 @@ export const CampaignList: React.FC = () => {
             <Select
               options={[
                 { value: '', label: 'All Types' },
-                { value: 'offers', label: 'Offers' },
-                { value: 'order_updates', label: 'Order Updates' },
-                { value: 'newsletter', label: 'Newsletter' },
+                { value: 'OFFERS', label: 'Offers' },
+                { value: 'ORDER_UPDATES', label: 'Order Updates' },
+                { value: 'NEWSLETTER', label: 'Newsletter' },
               ]}
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}

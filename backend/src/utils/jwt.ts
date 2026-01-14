@@ -6,8 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export type JwtPayload = {
   userId: string;
-  userType: "END_USER" | "SYSTEM_USER";
-  role?: "ADMIN" | "CREATOR" | "VIEWER";
+  role?: "ADMIN" | "CREATOR" | "VIEWER" | "CUSTOMER";
 };
 
 export const signToken = (payload: JwtPayload) => {

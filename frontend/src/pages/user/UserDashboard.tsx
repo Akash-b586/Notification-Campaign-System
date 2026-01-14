@@ -45,7 +45,7 @@ export const UserDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       // Fetch user preferences to calculate active subscriptions
-      const prefs = await preferenceService.get();
+      const prefs = await preferenceService.getProfile();
       const activeCount = [
         prefs.offers,
         prefs.order_updates,

@@ -40,29 +40,36 @@ export const useAuthStore = create<AuthState>()(
         const role = user.role as UserRole;
         
         // Admin has all permissions
-        if (role === 'admin') return true;
+        if (role === 'ADMIN') return true;
 
         // Define permissions based on role
         const permissions: Record<UserRole, Record<string, string[]>> = {
-          admin: {
+          ADMIN: {
             dashboard: ['read'],
             users: ['create', 'read', 'update', 'delete'],
             preferences: ['create', 'read', 'update', 'delete'],
-            campaigns: ['create', 'read', 'update', 'delete', 'send', 'download'],
-            logs: ['read', 'download'],
+            campaigns: ['create', 'read', 'update', 'delete', 'send'],
+            orders: ['create', 'read', 'update', 'delete'],
+            newsletters: ['create', 'read', 'update', 'delete', 'publish'],
+            logs: ['read'],
             staff: ['create', 'read', 'update', 'delete'],
           },
-          creator: {
+          CREATOR: {
             dashboard: ['read'],
             users: ['create', 'read', 'update'],
-            preferences: ['create', 'read', 'update', 'delete'],
-            campaigns: ['create', 'read', 'update', 'download'],
-            logs: ['read', 'download'],
-          },
-          viewer: {
-            dashboard: ['read'],
-            campaigns: ['read', 'download'],
+            campaigns: ['create', 'read', 'update', 'send'],
+            newsletters: ['create', 'read', 'update', 'publish'],
             logs: ['read'],
+          },
+          VIEWER: {
+            dashboard: ['read'],
+            campaigns: ['read'],
+            logs: ['read'],
+          },
+          CUSTOMER: {
+            orders: ['create', 'read'],
+            preferences: ['read', 'update'],
+            newsletters: ['read'],
           },
         };
 

@@ -1,73 +1,50 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Package, IndianRupee } from "lucide-react";
 import { Button, Card, Table, Badge, LoadingSpinner } from "../../components/ui";
 import { useNavigate } from "react-router-dom";
+import { orderService } from "../../services/api";
+import type { Order } from "../../types";
 
-interface Order {
-  orderId: string;
-  product: string;
-  amount: number;
-  status: "CREATED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-  date: string;
-}
+type OrderStatus = "DELIVERED" | "SHIPPED" | "PENDING" | "CANCELLED";
 
 export const UserOrders: React.FC = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate loading with dummy data
-    setTimeout(() => {
-      const dummyOrders: Order[] = [
-        {
-          orderId: "ORD001",
-          product: "Face Cream",
-          amount: 499,
-          status: "DELIVERED",
-          date: "2026-01-12T10:00:00Z",
-        },
-        {
-          orderId: "ORD002",
-          product: "Shampoo",
-          amount: 299,
-          status: "SHIPPED",
-          date: "2026-01-10T14:30:00Z",
-        },
-        {
-          orderId: "ORD003",
-          product: "Body Lotion",
-          amount: 399,
-          status: "CREATED",
-          date: "2026-01-09T09:15:00Z",
-        },
-        {
-          orderId: "ORD004",
-          product: "Hair Oil",
-          amount: 249,
-          status: "DELIVERED",
-          date: "2026-01-08T16:45:00Z",
-        },
-        {
-          orderId: "ORD005",
-          product: "Face Wash",
-          amount: 199,
-          status: "CANCELLED",
-          date: "2026-01-07T11:20:00Z",
-        },
-      ];
-      setOrders(dummyOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await orderService.getMyOrders();
+
+      // Handles both: array response OR { data: [] }
+      const ordersData: Order[] = Array.isArray(response)
+        ? response
+        : response?.data ?? [];
+
+      setOrders(ordersData);
+    } catch (err: any) {
+      setError(err?.message || "Failed to load orders");
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   }, []);
 
-  const getStatusVariant = (status: Order["status"]) => {
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
       case "DELIVERED":
         return "success";
       case "SHIPPED":
         return "info";
-      case "CREATED":
+      case "PENDING":
         return "warning";
       case "CANCELLED":
         return "error";
@@ -78,19 +55,23 @@ export const UserOrders: React.FC = () => {
 
   const columns = [
     {
-      key: "orderId",
+      key: "id",
       header: "Order ID",
       render: (order: Order) => (
-        <span className="font-mono text-sm text-gray-600">{order.orderId}</span>
+        <span className="font-mono text-sm text-gray-600">
+          {order.id}
+        </span>
       ),
     },
     {
-      key: "product",
+      key: "productName",
       header: "Product",
       render: (order: Order) => (
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4 text-gray-400" />
-          <span className="font-medium text-gray-900">{order.product}</span>
+          <span className="font-medium text-gray-900">
+            {order.productName}
+          </span>
         </div>
       ),
     },
@@ -100,7 +81,11 @@ export const UserOrders: React.FC = () => {
       render: (order: Order) => (
         <div className="flex items-center gap-1 font-semibold text-gray-900">
           <IndianRupee className="w-4 h-4" />
-          <span>{order.amount}</span>
+          <span>
+            {typeof order.amount === "number"
+              ? order.amount.toLocaleString("en-IN")
+              : order.amount}
+          </span>
         </div>
       ),
     },
@@ -108,19 +93,23 @@ export const UserOrders: React.FC = () => {
       key: "status",
       header: "Status",
       render: (order: Order) => (
-        <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+        <Badge variant={getStatusVariant(order.status as OrderStatus)}>
+          {order.status}
+        </Badge>
       ),
     },
     {
-      key: "date",
+      key: "createdAt",
       header: "Date",
       render: (order: Order) => (
         <span className="text-gray-600">
-          {new Date(order.date).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
+          {order.createdAt
+            ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "--"}
         </span>
       ),
     },
@@ -144,42 +133,55 @@ export const UserOrders: React.FC = () => {
             View and track your order history
           </p>
         </div>
+
         <Button
-          onClick={() => navigate("/user/orders/new")}
           variant="primary"
           icon={<Plus className="w-5 h-5" />}
+          onClick={() => navigate("/user/orders/new")}
         >
           Create Order
         </Button>
       </div>
 
-      {/* Orders Summary */}
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {/* Summary */}
       <div className="grid md:grid-cols-4 gap-4">
         <Card className="p-4">
           <p className="text-sm text-gray-600">Total Orders</p>
-          <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+          <p className="text-2xl font-bold">{orders.length}</p>
         </Card>
+
         <Card className="p-4">
           <p className="text-sm text-gray-600">Delivered</p>
           <p className="text-2xl font-bold text-green-600">
-            {orders.filter((o) => o.status === "DELIVERED").length}
+            {orders.filter(o => o.status === "DELIVERED").length}
           </p>
         </Card>
+
         <Card className="p-4">
           <p className="text-sm text-gray-600">In Progress</p>
           <p className="text-2xl font-bold text-blue-600">
-            {orders.filter((o) => o.status === "SHIPPED" || o.status === "CREATED").length}
+            {orders.filter(
+              o => o.status === "SHIPPED"
+            ).length}
           </p>
         </Card>
+
         <Card className="p-4">
           <p className="text-sm text-gray-600">Cancelled</p>
           <p className="text-2xl font-bold text-red-600">
-            {orders.filter((o) => o.status === "CANCELLED").length}
+            {orders.filter(o => o.status === "CANCELLED").length}
           </p>
         </Card>
       </div>
 
-      {/* Orders Table */}
+      {/* Table */}
       <Card>
         <Table
           data={orders}

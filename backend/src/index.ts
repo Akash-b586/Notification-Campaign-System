@@ -9,6 +9,8 @@ import userRoutes from "./routes/user.routes";
 import logRoutes from "./routes/log.routes";
 import statsRoutes from "./routes/stats.routes";
 import staffRoutes from "./routes/staff.routes";
+import orderRoutes from "./routes/order.routes";
+import newsletterRoutes from "./routes/newsletter.routes";
 import { authenticate } from "./middleware/auth.middleware";
 
 dotenv.config();
@@ -25,14 +27,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Public routes (AUTH)
-app.use("/api/auth",authRoutes);
+app.use("/api/auth", authRoutes);
 
 // Protected routes
 app.use(authenticate);
 
-app.use("/api/me",preferenceRoutes);
+app.use("/api/me", preferenceRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/newsletters", newsletterRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/staff", staffRoutes);
@@ -43,4 +47,3 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
-

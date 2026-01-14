@@ -1,46 +1,64 @@
 import { create } from 'zustand';
-import type { NotificationPreference } from '../types';
+import type { NotificationPreference, NotificationType } from '../types';
 
 interface PreferenceState {
-  preferences: Record<string, NotificationPreference>;
+  // Preferences organized by userId, then by notification type
+  preferences: Record<string, Record<NotificationType, NotificationPreference>>;
+  newsLetterSubscriptions: Record<string, boolean>; // userId -> isSubscribed
   isLoading: boolean;
   
   // Actions
-  setPreferences: (preferences: NotificationPreference[]) => void;
-  updatePreference: (userId: string, data: Partial<NotificationPreference>) => void;
+  setPreferences: (userId: string, preferences: Record<NotificationType, NotificationPreference>) => void;
+  updatePreference: (userId: string, notificationType: NotificationType, data: Partial<NotificationPreference>) => void;
+  getPreference: (userId: string, notificationType: NotificationType) => NotificationPreference | undefined;
+  setNewsletterSubscription: (userId: string, isSubscribed: boolean) => void;
   setLoading: (loading: boolean) => void;
-  getUserPreference: (userId: string) => NotificationPreference | undefined;
 }
 
 export const usePreferenceStore = create<PreferenceState>((set, get) => ({
   preferences: {},
+  newsLetterSubscriptions: {},
   isLoading: false,
 
-  setPreferences: (preferences: NotificationPreference[]) => {
-    const preferencesMap: Record<string, NotificationPreference> = {};
-    preferences.forEach((pref) => {
-      preferencesMap[pref.user_id] = pref;
-    });
-    set({ preferences: preferencesMap });
+  setPreferences: (userId: string, preferences: Record<NotificationType, NotificationPreference>) => {
+    set((state) => ({
+      preferences: {
+        ...state.preferences,
+        [userId]: preferences,
+      },
+    }));
   },
 
-  updatePreference: (userId: string, data: Partial<NotificationPreference>) => {
+  updatePreference: (userId: string, notificationType: NotificationType, data: Partial<NotificationPreference>) => {
     set((state) => ({
       preferences: {
         ...state.preferences,
         [userId]: {
           ...state.preferences[userId],
-          ...data,
+          [notificationType]: {
+            ...state.preferences[userId]?.[notificationType],
+            ...data,
+          },
         },
+      },
+    }));
+  },
+
+  getPreference: (userId: string, notificationType: NotificationType) => {
+    const state = get();
+    return state.preferences[userId]?.[notificationType];
+  },
+
+  setNewsletterSubscription: (userId: string, isSubscribed: boolean) => {
+    set((state) => ({
+      newsLetterSubscriptions: {
+        ...state.newsLetterSubscriptions,
+        [userId]: isSubscribed,
       },
     }));
   },
 
   setLoading: (loading: boolean) => {
     set({ isLoading: loading });
-  },
-
-  getUserPreference: (userId: string) => {
-    return get().preferences[userId];
   },
 }));

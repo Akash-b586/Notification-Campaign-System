@@ -45,7 +45,7 @@ const generateRandomPassword = (length: number = 12): string => {
 };
 
 export const UserManagement: React.FC = () => {
-  const { hasPermission } = useAuthStore();
+  const { user,hasPermission } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -79,12 +79,12 @@ export const UserManagement: React.FC = () => {
       const data = await userService.list();
       // Map backend format to frontend format
       const mappedUsers: User[] = data.map((u: any) => ({
-        user_id: u.userId,
+        userId: u.userId,
         name: u.name,
         email: u.email,
         phone: u.phone,
         city: u.city,
-        is_active: u.isActive,
+        isActive: u.isActive,
       }));
       setUsers(mappedUsers);
     } catch (err: any) {
@@ -121,7 +121,7 @@ export const UserManagement: React.FC = () => {
         password: "",
         phone: user.phone || "",
         city: user.city || "",
-        is_active: user.is_active,
+        is_active: user.isActive,
       });
     } else {
       setEditingUser(null);
@@ -148,7 +148,7 @@ export const UserManagement: React.FC = () => {
 
     try {
       if (editingUser) {
-        await userService.update(editingUser.user_id, {
+        await userService.update(editingUser.userId, {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
@@ -299,20 +299,20 @@ export const UserManagement: React.FC = () => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.user_id.toLowerCase().includes(searchQuery.toLowerCase());
+      user.userId.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCity = !selectedCity || user.city === selectedCity;
-    const matchesActive = !showActiveOnly || user.is_active;
+    const matchesActive = !showActiveOnly || user.isActive;
 
     return matchesSearch && matchesCity && matchesActive;
   });
 
   const columns = [
     {
-      key: "user_id",
+      key: "userId",
       header: "User ID",
       render: (user: User) => (
-        <span className="font-mono text-sm text-gray-600">{user.user_id}</span>
+        <span className="font-mono text-sm text-gray-600">{user.userId}</span>
       ),
     },
     {
@@ -340,12 +340,12 @@ export const UserManagement: React.FC = () => {
       ),
     },
     {
-      key: "is_active",
+      key: "isActive",
       header: "Status",
       render: (user: User) => (
         <ToggleSwitch
-          checked={user.is_active}
-          onChange={(checked) => handleToggleActive(user.user_id, checked)}
+          checked={user.isActive}
+          onChange={(checked) => handleToggleActive(user.userId, checked)}
           disabled={!canUpdate}
         />
       ),
@@ -374,7 +374,7 @@ export const UserManagement: React.FC = () => {
           )}
           {canDelete && (
             <button
-              onClick={() => handleDelete(user.user_id)}
+              onClick={() => handleDelete(user.userId)}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete"
             >

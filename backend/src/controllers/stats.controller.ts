@@ -134,6 +134,7 @@ export const getRecentActivity = async (req: any, res: any) => {
 
     res.json(activities);
   } catch (error: any) {
+    console.log(error);
     res.status(500).json({ message: error.message || 'Failed to fetch recent activity' });
   }
 };

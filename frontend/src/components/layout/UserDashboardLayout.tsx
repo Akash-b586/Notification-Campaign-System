@@ -10,6 +10,7 @@ import {
   Settings,
   Inbox,
   User,
+  Mail
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
@@ -30,6 +31,11 @@ const navItems: NavItem[] = [
     label: "My Orders",
     icon: <ShoppingBag className="w-5 h-5" />,
   },
+  {
+  path: "/user/newsletters",
+  label: "Newsletters",
+  icon: <Mail className="w-5 h-5" />,
+},
   {
     path: "/user/preferences",
     label: "My Preferences",

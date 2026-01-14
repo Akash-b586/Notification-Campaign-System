@@ -10,9 +10,9 @@ export const CreateCampaign: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({
-    campaign_name: '',
-    notification_type: '',
-    city_filter: '',
+    campaignName: '',
+    notificationType: '',
+    cityFilter: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingCampaign, setIsFetchingCampaign] = useState(false);
@@ -31,12 +31,10 @@ export const CreateCampaign: React.FC = () => {
     setError('');
     try {
       const data = await campaignService.get(campaignId!);
-      // Convert backend format to frontend format
-      const notifType = data.notificationType.toLowerCase().replace(/_/g, '-');
       setFormData({
-        campaign_name: data.campaignName,
-        notification_type: notifType === 'order-updates' ? 'order_updates' : notifType,
-        city_filter: data.cityFilter || '',
+        campaignName: data.campaignName,
+        notificationType: data.notificationType,
+        cityFilter: data.cityFilter || '',
       });
     } catch (err: any) {
       setError(err.message || 'Failed to load campaign');
@@ -53,15 +51,14 @@ export const CreateCampaign: React.FC = () => {
     try {
       if (isEditMode) {
         await campaignService.update(campaignId!, {
-          campaignName: formData.campaign_name,
-          notificationType: formData.notification_type,
-          cityFilter: formData.city_filter || undefined,
+          campaignName: formData.campaignName,
+          cityFilter: formData.cityFilter || undefined,
         });
       } else {
         await campaignService.create({
-          campaignName: formData.campaign_name,
-          notificationType: formData.notification_type,
-          cityFilter: formData.city_filter || undefined,
+          campaignName: formData.campaignName,
+          notificationType: formData.notificationType,
+          cityFilter: formData.cityFilter || undefined,
         });
       }
 
@@ -81,21 +78,20 @@ export const CreateCampaign: React.FC = () => {
 
       if (isEditMode) {
         await campaignService.update(campaignId!, {
-          campaignName: formData.campaign_name,
-          notificationType: formData.notification_type,
-          cityFilter: formData.city_filter || undefined,
+          campaignName: formData.campaignName,
+          cityFilter: formData.cityFilter || undefined,
         });
       } else {
         const response = await campaignService.create({
-          campaignName: formData.campaign_name,
-          notificationType: formData.notification_type,
-          cityFilter: formData.city_filter || undefined,
+          campaignName: formData.campaignName,
+          notificationType: formData.notificationType,
+          cityFilter: formData.cityFilter || undefined,
         });
-        campaignIdToPreview = response.campaignId;
+        campaignIdToPreview = response.id;
       }
 
       navigate(`/campaigns/${campaignIdToPreview}/preview`, {
-        state: { campaignName: formData.campaign_name },
+        state: { campaignName: formData.campaignName },
       });
     } catch (err: any) {
       setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} campaign`);
@@ -104,7 +100,7 @@ export const CreateCampaign: React.FC = () => {
     }
   };
 
-  const isValid = formData.campaign_name && formData.notification_type;
+  const isValid = formData?.campaignName && formData?.notificationType;
 
   if (isFetchingCampaign) {
     return (
@@ -149,9 +145,9 @@ export const CreateCampaign: React.FC = () => {
           <Input
             label="Campaign Name"
             placeholder="e.g., Diwali Offers 2026"
-            value={formData.campaign_name}
+            value={formData.campaignName}
             onChange={(e) =>
-              setFormData({ ...formData, campaign_name: e.target.value })
+              setFormData({ ...formData, campaignName: e.target.value })
             }
             required
           />
@@ -160,13 +156,13 @@ export const CreateCampaign: React.FC = () => {
             label="Notification Type"
             options={[
               { value: '', label: 'Select notification type' },
-              { value: 'offers', label: 'Promotional Offers' },
-              { value: 'order_updates', label: 'Order Updates' },
-              { value: 'newsletter', label: 'Newsletter' },
+              { value: 'OFFERS', label: 'Promotional Offers' },
+              { value: 'ORDER_UPDATES', label: 'Order Updates' },
+              { value: 'NEWSLETTER', label: 'Newsletter' },
             ]}
-            value={formData.notification_type}
+            value={formData.notificationType}
             onChange={(e) =>
-              setFormData({ ...formData, notification_type: e.target.value })
+              setFormData({ ...formData, notificationType: e.target.value })
             }
             required
           />
@@ -177,9 +173,9 @@ export const CreateCampaign: React.FC = () => {
               value: city,
               label: city || 'All Cities',
             }))}
-            value={formData.city_filter}
+            value={formData.cityFilter}
             onChange={(e) =>
-              setFormData({ ...formData, city_filter: e.target.value })
+              setFormData({ ...formData, cityFilter: e.target.value })
             }
           />
 
@@ -190,14 +186,14 @@ export const CreateCampaign: React.FC = () => {
               <li>
                 ✓ User must have opted in for{' '}
                 <strong>
-                  {formData.notification_type
-                    ? formData.notification_type.replace('_', ' ')
+                  {formData.notificationType
+                    ? formData.notificationType.replace('_', ' ')
                     : 'selected notification type'}
                 </strong>
               </li>
-              {formData.city_filter && (
+              {formData.cityFilter && (
                 <li>
-                  ✓ User must be from <strong>{formData.city_filter}</strong>
+                  ✓ User must be from <strong>{formData.cityFilter}</strong>
                 </li>
               )}
             </ul>

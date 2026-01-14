@@ -51,16 +51,7 @@ export const RecipientPreview: React.FC = () => {
     setError('');
     try {
       const data = await campaignService.preview(campaignId!);
-      // Map backend response to frontend User format
-      const mappedUsers: User[] = data.users.map((u: any) => ({
-        user_id: u.userId,
-        name: u.name || 'Unknown',
-        email: u.email,
-        phone: u.phone,
-        city: u.city,
-        is_active: true,
-      }));
-      setEligibleUsers(mappedUsers);
+      setEligibleUsers(data.users);
     } catch (err: any) {
       setError(err.message || 'Failed to load preview');
     } finally {
@@ -72,7 +63,7 @@ export const RecipientPreview: React.FC = () => {
     const csvContent = [
       'User ID,Name,Email,Phone,City',
       ...eligibleUsers.map((user) =>
-        [user.user_id, user.name, user.email, user.phone || '', user.city || ''].join(',')
+        [user.userId, user.name, user.email, user.phone || '', user.city || ''].join(',')
       ),
     ].join('\n');
 
@@ -124,10 +115,10 @@ export const RecipientPreview: React.FC = () => {
 
   const columns = [
     {
-      key: 'user_id' as const,
+      key: 'userId' as const,
       header: 'User ID',
       render: (user: User) => (
-        <span className="font-mono text-sm text-gray-600">{user.user_id}</span>
+        <span className="font-mono text-sm text-gray-600">{user.userId}</span>
       ),
     },
     {
@@ -151,9 +142,9 @@ export const RecipientPreview: React.FC = () => {
       render: (user: User) => <span className="text-gray-600">{user.city || '-'}</span>,
     },
     {
-      key: 'is_active' as const,
+      key: 'isActive' as const,
       header: 'Status',
-      render: (user: User) => <Badge variant="success">Eligible</Badge>,
+      render: () => <Badge variant="success">Eligible</Badge>,
     },
   ];
 

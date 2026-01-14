@@ -71,7 +71,7 @@ export const UserProfile: React.FC = () => {
       return;
     }
 
-    if (!user?.user_id) {
+    if (!user?.userId) {
       setError("User ID not found");
       return;
     }
@@ -85,7 +85,7 @@ export const UserProfile: React.FC = () => {
         city: formData.city || undefined,
       };
 
-      await userService.update(user.user_id, updateData);
+      await userService.update(user.userId, updateData);
       
       // Update auth store with new user data
       login({
@@ -122,7 +122,7 @@ export const UserProfile: React.FC = () => {
         <div className="p-6">
           {/* Profile Header */}
           <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+            <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -251,7 +251,7 @@ export const UserProfile: React.FC = () => {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-gray-600">User ID</span>
-              <span className="font-medium text-gray-900">{user?.user_id}</span>
+              <span className="font-medium text-gray-900">{user?.userId}</span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-gray-600">Account Type</span>

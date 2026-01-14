@@ -1,20 +1,21 @@
-import {NextFunction } from "express";
+import { NextFunction } from "express";
 
-type Role = "ADMIN" | "CREATOR" | "VIEWER";
+type Role = "ADMIN" | "CREATOR" | "VIEWER" | "CUSTOMER";
 
 export const authorize = (...allowedRoles: Role[]) => {
   return (req: any, res: any, next: NextFunction) => {
-    // Must be system user
-    if (req.user?.userType !== "SYSTEM_USER") {
-      return res.status(403).json({ message: "Forbidden" });
+    // Must have a user role
+    if (!req.user?.role) {
+      return res.status(403).json({ message: "Forbidden - No role found" });
     }
     
-    // Viewer-only routes can pass empty roles
+    // If no specific roles are required (viewer-only routes), allow all authenticated users
     if (allowedRoles.length === 0) {
       return next();
     }
   
-    if (!allowedRoles.includes(req.user?.role!)) {
+    // Check if user's role is in the allowed roles
+    if (!allowedRoles.includes(req.user.role)) {
       return res
         .status(403)
         .json({ message: "Insufficient permissions" });

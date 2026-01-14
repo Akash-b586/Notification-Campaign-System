@@ -7,7 +7,11 @@ import { Dashboard } from './pages/dashboard';
 import { UserManagement } from './pages/users';
 import { NotificationPreferences } from './pages/preferences';
 import { CampaignList, CreateCampaign, RecipientPreview } from './pages/campaigns';
+import { NewsletterList, CreateNewsletter } from './pages/newsletters';
+import { OrderManagement } from './pages/orders';
 import { NotificationLogs } from './pages/logs';
+import { UserNewsletterSubscriptions } from './pages/user';
+
 import { 
   UserDashboard, 
   UserPreferences, 
@@ -22,10 +26,10 @@ import { useAuthStore } from './store/authStore';
 function App() {
   const { isAuthenticated, user } = useAuthStore();
 
-  // Smart redirect based on user type
+  // Smart redirect based on user role
   const getDefaultRoute = () => {
     if (!isAuthenticated) return '/login';
-    return user?.userType === 'END_USER' ? '/user' : '/dashboard';
+    return user?.role === 'CUSTOMER' ? '/user' : '/dashboard';
   };
 
   return (
@@ -50,6 +54,7 @@ function App() {
           <Route path="orders/new" element={<CreateOrder />} />
           <Route path="notifications" element={<UserNotifications />} />
           <Route path="profile" element={<UserProfile />} />
+          <Route path="newsletters" element={<UserNewsletterSubscriptions />} />
         </Route>
 
         {/* Admin/System User Dashboard (Protected) */}
@@ -69,6 +74,10 @@ function App() {
           <Route path="campaigns/create" element={<CreateCampaign />} />
           <Route path="campaigns/:campaignId/edit" element={<CreateCampaign />} />
           <Route path="campaigns/:campaignId/preview" element={<RecipientPreview />} />
+          <Route path="orders" element={<OrderManagement />} />
+          <Route path="newsletters" element={<NewsletterList />} />
+          <Route path="newsletters/create" element={<CreateNewsletter />} />
+          <Route path="newsletters/:newsletterId/edit" element={<CreateNewsletter />} />
           <Route path="logs" element={<NotificationLogs />} />
           <Route path="staff/add" element={<AddStaff />} />
         </Route>

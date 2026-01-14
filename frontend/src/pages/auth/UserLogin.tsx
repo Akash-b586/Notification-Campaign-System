@@ -26,20 +26,21 @@ export const UserLogin: React.FC = () => {
       
       // Map backend response to frontend user object
       const user = {
-        user_id: response.userId || '1',
+        userId: response.userId,
         name: response.name || formData.email.split('@')[0],
-        email: formData.email,
-        role: (response.role?.toLowerCase() || 'viewer'),
-        userType: response.userType as 'END_USER' | 'SYSTEM_USER',
+        email: response.email,
+        role: response.role,
       };
 
       login(user);
       
-      // Redirect based on userType
-      if (response.userType === 'END_USER') {
+      // Redirect based on role
+      if (response.role === 'CUSTOMER') {
         navigate('/user');
-      } else {
+      } else if (response.role === 'ADMIN' || response.role === 'CREATOR' || response.role === 'VIEWER') {
         navigate('/dashboard');
+      } else {
+        navigate('/');
       }
     } catch (err: any) {
       console.log(err);

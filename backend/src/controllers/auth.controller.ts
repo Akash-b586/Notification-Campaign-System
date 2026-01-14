@@ -1,11 +1,10 @@
-import { Request, Response } from "express";
 import prisma from "../config/prisma";
 import { hashPassword, comparePassword } from "../utils/hash";
 import { signToken } from "../utils/jwt";
 
-export const endUserSignup = async (req: any, res: any) => {
+export const signup = async (req: any, res: any) => {
   try {
-    const { name, email, password, phone, city } = req.body;
+    const { name, email, password, phone, city, role } = req.body;
 
     if (!email || !password || !name) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -18,47 +17,41 @@ export const endUserSignup = async (req: any, res: any) => {
 
     const hashedPassword = await hashPassword(password);
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         phone,
         city,
-        preference: { create: {} },
+        role: role || "CUSTOMER",
+        isActive: true,
       },
     });
 
-    res.status(201).json({ message: "Signup successful" });
-  } catch (error) {}
-};
-
-export const systemUserSignup = async (req: any, res: any) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    if (!email || !password || !name) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    const existing = await prisma.systemUser.findUnique({ where: { email } });
-    if (existing) {
-      return res.status(409).json({ message: "Email already registered" });
-    }
-
-    const hashedPassword = await hashPassword(password);
-
-    await prisma.systemUser.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
+    const token = signToken({
+      userId: user.userId,
+      role: user.role,
     });
 
-    res.status(201).json({ message: "Signup successful" });
-  } catch (error) {}
+    res.cookie("jwt", token, {
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    res.status(201).json({ 
+      message: "Signup successful",
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Signup failed" });
+  }
 };
 
 export const login = async (req: any, res: any) => {
@@ -69,16 +62,14 @@ export const login = async (req: any, res: any) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    let user: any = await prisma.user.findUnique({ where: { email } });
-    let userType: "END_USER" | "SYSTEM_USER" = "END_USER";
-
-    if (!user) {
-      user = await prisma.systemUser.findUnique({ where: { email } });
-      userType = "SYSTEM_USER";
-    }
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: "User account is inactive" });
     }
 
     const IsValidPassword = await comparePassword(password, user.password);
@@ -88,15 +79,14 @@ export const login = async (req: any, res: any) => {
 
     const token = signToken({
       userId: user.userId,
-      userType,
-      role: userType === "SYSTEM_USER" ? user.role : null,
+      role: user.role,
     });
 
-    res.cookie("jwt",token,{
-        maxAge: 2*24*60*60*1000,
-        httpOnly:true,
-        sameSite:"lax",
-        secure: process.env.NODE_ENV === "production"
+    res.cookie("jwt", token, {
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     });
 
     return res.json({
@@ -104,8 +94,7 @@ export const login = async (req: any, res: any) => {
       userId: user.userId,
       name: user.name,
       email: user.email,
-      userType,
-      role: userType === "SYSTEM_USER" ? user.role : null
+      role: user.role,
     });
   } catch (error) {
     console.error(error);

@@ -20,3 +20,6 @@ export const authenticate = (
     return res.status(401).json({ message: "Invalid token" });
   }
 };
+
+// Alias for authenticate, used for explicit user authentication in routes
+export const authenticateUser = authenticate;

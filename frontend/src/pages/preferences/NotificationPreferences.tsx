@@ -10,14 +10,12 @@ import {
 } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { preferenceService } from '../../services/api';
-import type { User } from '../../types';
+import type { User, NotificationPreference, NotificationType } from '../../types';
 
 interface UserWithPreferences extends User {
-  preference: {
-    offers: boolean;
-    orderUpdates: boolean;
-    newsletter: boolean;
-  } | null;
+  preferences: {
+    [key in NotificationType]?: NotificationPreference;
+  };
 }
 
 export const NotificationPreferences: React.FC = () => {
@@ -41,7 +39,7 @@ export const NotificationPreferences: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      const data = await preferenceService.getAllUsers();
+      const data = await preferenceService.getAllUsersPreferences();
       setUsers(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load users');
@@ -52,17 +50,21 @@ export const NotificationPreferences: React.FC = () => {
 
   const handlePreferenceChange = (
     userId: string,
-    type: 'offers' | 'orderUpdates' | 'newsletter',
+    notificationType: NotificationType,
+    channel: 'email' | 'sms' | 'push',
     value: boolean
   ) => {
     setUsers((prev) =>
       prev.map((user) => {
-        if (user.user_id === userId && user.preference) {
+        if (user.userId === userId && user.preferences) {
           return {
             ...user,
-            preference: {
-              ...user.preference,
-              [type]: value,
+            preferences: {
+              ...user.preferences,
+              [notificationType]: {
+                ...user.preferences[notificationType],
+                [channel]: value,
+              },
             },
           };
         }
@@ -71,7 +73,7 @@ export const NotificationPreferences: React.FC = () => {
     );
 
     const existingChanges = changedUsers.get(userId) || {};
-    setChangedUsers(new Map(changedUsers.set(userId, { ...existingChanges, [type]: value })));
+    setChangedUsers(new Map(changedUsers.set(userId, { ...existingChanges, [notificationType]: { ...existingChanges[notificationType], [channel]: value } })));
   };
 
   const handleSave = async () => {
@@ -80,10 +82,14 @@ export const NotificationPreferences: React.FC = () => {
 
     try {
       const promises = Array.from(changedUsers.entries()).map(([userId, changes]) =>
-        preferenceService.updateUserPreference(userId, changes)
+        Promise.all(
+          Object.entries(changes).map(([type, channels]: any) =>
+            preferenceService.updateNotificationPreferences(type as NotificationType, channels)
+          )
+        )
       );
 
-      await Promise.all(promises);
+      await Promise.all(promises.flat());
       setChangedUsers(new Map());
       alert('Preferences saved successfully!');
     } catch (err: any) {
@@ -122,11 +128,11 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div className="flex items-center justify-center">
           <ToggleSwitch
-            checked={user.preference?.offers || false}
+            checked={user.preferences?.OFFERS?.email || false}
             onChange={(value) =>
-              handlePreferenceChange(user.user_id, 'offers', value)
+              handlePreferenceChange(user.userId, 'OFFERS', 'email', value)
             }
-            disabled={!canUpdate || !user.preference}
+            disabled={!canUpdate || !user.preferences}
           />
         </div>
       ),
@@ -142,11 +148,11 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div className="flex items-center justify-center">
           <ToggleSwitch
-            checked={user.preference?.orderUpdates || false}
+            checked={user.preferences?.ORDER_UPDATES?.email || false}
             onChange={(value) =>
-              handlePreferenceChange(user.user_id, 'orderUpdates', value)
+              handlePreferenceChange(user.userId, 'ORDER_UPDATES', 'email', value)
             }
-            disabled={!canUpdate || !user.preference}
+            disabled={!canUpdate || !user.preferences}
           />
         </div>
       ),
@@ -162,11 +168,11 @@ export const NotificationPreferences: React.FC = () => {
       render: (user: UserWithPreferences) => (
         <div className="flex items-center justify-center">
           <ToggleSwitch
-            checked={user.preference?.newsletter || false}
+            checked={user.preferences?.NEWSLETTER?.email || false}
             onChange={(value) =>
-              handlePreferenceChange(user.user_id, 'newsletter', value)
+              handlePreferenceChange(user.userId, 'NEWSLETTER', 'email', value)
             }
-            disabled={!canUpdate || !user.preference}
+            disabled={!canUpdate || !user.preferences}
           />
         </div>
       ),
@@ -212,7 +218,7 @@ export const NotificationPreferences: React.FC = () => {
 
       {/* Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-white border-orange-200">
+        <Card className="p-6 bg-linear-to-br from-orange-50 to-white border-orange-200">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-orange-100 rounded-lg">
               <Bell className="w-5 h-5 text-orange-600" />
@@ -224,13 +230,13 @@ export const NotificationPreferences: React.FC = () => {
           </p>
           <div className="mt-3 text-2xl font-bold text-orange-600">
             {
-              usersWithPreferences.filter((u) => u.preference?.offers).length
+              usersWithPreferences.filter((u) => u.preferences?.OFFERS?.email).length
             }{' '}
             <span className="text-sm font-normal text-gray-600">opted in</span>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-white border-blue-200">
+        <Card className="p-6 bg-linear-to-br from-blue-50 to-white border-blue-200">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Package className="w-5 h-5 text-blue-600" />
@@ -242,13 +248,13 @@ export const NotificationPreferences: React.FC = () => {
           </p>
           <div className="mt-3 text-2xl font-bold text-blue-600">
             {
-              usersWithPreferences.filter((u) => u.preference?.orderUpdates).length
+              usersWithPreferences.filter((u) => u.preferences?.ORDER_UPDATES?.email).length
             }{' '}
             <span className="text-sm font-normal text-gray-600">opted in</span>
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-white border-green-200">
+        <Card className="p-6 bg-linear-to-br from-green-50 to-white border-green-200">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-green-100 rounded-lg">
               <Mail className="w-5 h-5 text-green-600" />
@@ -260,7 +266,7 @@ export const NotificationPreferences: React.FC = () => {
           </p>
           <div className="mt-3 text-2xl font-bold text-green-600">
             {
-              usersWithPreferences.filter((u) => u.preference?.newsletter).length
+              usersWithPreferences.filter((u) => u.preferences?.NEWSLETTER?.email).length
             }{' '}
             <span className="text-sm font-normal text-gray-600">opted in</span>
           </div>

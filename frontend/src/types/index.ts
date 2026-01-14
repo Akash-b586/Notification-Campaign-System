@@ -1,64 +1,112 @@
 // User Types
-export type UserRole = 'admin' | 'creator' | 'viewer';
+export type UserRole = 'ADMIN' | 'CREATOR' | 'VIEWER' | 'CUSTOMER';
 
 export interface User {
-  user_id: string;
+  userId: string;
   name: string;
   email: string;
   password?: string;
   phone?: string;
   city?: string;
-  is_active: boolean;
-  role?: UserRole;
-  created_at?: string;
-  updated_at?: string;
+  isActive: boolean;
+  role: UserRole;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Notification Preference Types
-export type NotificationType = 'offers' | 'order_updates' | 'newsletter';
+export type NotificationType = 'OFFERS' | 'ORDER_UPDATES' | 'NEWSLETTER';
+export type NotificationChannel = 'EMAIL' | 'SMS' | 'PUSH';
 
 export interface NotificationPreference {
-  user_id: string;
-  offers: boolean;
-  order_updates: boolean;
-  newsletter: boolean;
+  id: string;
+  userId: string;
+  notificationType: NotificationType;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+  updatedAt: string;
+}
+
+// Newsletter Types
+export interface Newsletter {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface NewsletterSubscription {
+  id: string;
+  userId: string;
+  newsletterId: string;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+  createdAt: string;
+  updatedAt: string;
+  newsletter?: Newsletter;
 }
 
 // Campaign Types
-export type CampaignStatus = 'draft' | 'sent';
+export type CampaignStatus = 'DRAFT' | 'SENT';
 
 export interface Campaign {
-  campaign_id: string;
-  campaign_name: string;
-  notification_type: NotificationType;
-  city_filter?: string;
-  created_by: string;
+  id: string;
+  campaignName: string;
+  notificationType: NotificationType;
+  cityFilter?: string;
+  createdById: string;
   status: CampaignStatus;
-  created_at?: string;
-  updated_at?: string;
-  recipient_count?: number;
+  createdAt?: string;
+  createdBy?: {
+    userId: string;
+    name: string;
+    email: string;
+  };
+  recipientCount?: number;
+}
+
+// Order Types
+export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  userId: string;
+  productName: string;
+  amount: number;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Notification Log Types
-export type NotificationStatus = 'success' | 'failed';
+export type SendStatus = 'SUCCESS' | 'FAILED';
 
 export interface NotificationLog {
-  log_id: string;
-  user_id: string;
-  campaign_id: string;
-  campaign_name?: string;
-  user_name?: string;
-  user_email?: string;
-  sent_at: string;
-  status: NotificationStatus;
+  id: string;
+  userId: string;
+  notificationType: NotificationType;
+  channel: NotificationChannel;
+  status: SendStatus;
+  sentAt: string;
+  campaignId?: string;
+  orderId?: string;
+  newsletterId?: string;
+  // Expanded relationships from API
+  user?: User;
+  campaign?: Campaign;
 }
 
 // Dashboard Stats Types
 export interface DashboardStats {
-  active_users: number;
-  campaigns_sent: number;
-  success_rate: number;
-  total_notifications: number;
+  activeUsers: number;
+  campaignsSent: number;
+  successRate: number;
+  totalNotifications: number;
 }
 
 export interface ActivityData {
@@ -68,20 +116,17 @@ export interface ActivityData {
 
 // Auth Types
 export interface AuthUser {
-  user_id: string;
+  userId: string;
   name: string;
   email: string;
   role: UserRole;
-  userType?: 'END_USER' | 'SYSTEM_USER';
   phone?: string;
   city?: string;
-  token?: string;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
-  role?: 'user' | 'admin';
 }
 
 export interface SignupData {
@@ -90,14 +135,59 @@ export interface SignupData {
   password: string;
   phone?: string;
   city?: string;
+  role?: UserRole;
 }
 
 // Form Types
 export interface CampaignFormData {
-  campaign_name: string;
-  notification_type: NotificationType;
-  city_filter?: string;
+  campaignName: string;
+  notificationType: NotificationType;
+  cityFilter?: string;
 }
+
+export interface OrderFormData {
+  orderNumber: string;
+  userId: string;
+}
+
+// API Response Types
+export interface ApiResponse<T = any> {
+  message?: string;
+  data?: T;
+  [key: string]: any;
+}
+
+// Permission Types
+export const Permissions = {
+  admin: {
+    dashboard: ['read'],
+    users: ['create', 'read', 'update', 'delete'],
+    preferences: ['create', 'read', 'update', 'delete'],
+    campaigns: ['create', 'read', 'update', 'delete', 'send'],
+    orders: ['create', 'read', 'update', 'delete'],
+    newsletters: ['create', 'read', 'update', 'delete', 'publish'],
+    logs: ['read'],
+    staff: ['create', 'read', 'update', 'delete'],
+  },
+  creator: {
+    dashboard: ['read'],
+    users: ['create', 'read', 'update'],
+    campaigns: ['create', 'read', 'update', 'send'],
+    newsletters: ['create', 'read', 'update', 'publish'],
+    logs: ['read'],
+  },
+  viewer: {
+    dashboard: ['read'],
+    campaigns: ['read'],
+    logs: ['read'],
+  },
+  customer: {
+    orders: ['create', 'read'],
+    preferences: ['read', 'update'],
+    newsletters: ['read'],
+  },
+};
+
 
 export interface UserFormData {
   name: string;
@@ -111,20 +201,20 @@ export interface UserFormData {
 export interface UserFilters {
   search?: string;
   city?: string;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 export interface CampaignFilters {
   status?: CampaignStatus;
-  notification_type?: NotificationType;
+  notificationType?: NotificationType;
   search?: string;
 }
 
 export interface LogFilters {
-  campaign_id?: string;
-  status?: NotificationStatus;
-  date_from?: string;
-  date_to?: string;
+  campaignId?: string;
+  status?: Notification;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // Permission Types
@@ -139,26 +229,31 @@ export interface Permission {
 }
 
 export const RolePermissions: Record<UserRole, Record<string, Partial<Permission>>> = {
-  admin: {
+  ADMIN: {
     dashboard: { read: true },
     users: { create: true, read: true, update: true, delete: true },
     preferences: { create: true, read: true, update: true, delete: true },
     campaigns: { create: true, read: true, update: true, delete: true, send: true, download: true },
     logs: { read: true, download: true },
   },
-  creator: {
+  CREATOR: {
     dashboard: { read: true },
     users: { create: true, read: true, update: true },
     preferences: { create: true, read: true, update: true },
     campaigns: { create: true, read: true, update: true, send: true, download: true },
     logs: { read: true },
   },
-  viewer: {
+  VIEWER: {
     dashboard: { read: true },
     users: { read: true },
     preferences: { read: true },
     campaigns: { read: true, download: true },
     logs: { read: true, download: true },
+  },
+  CUSTOMER: {
+    orders: { create: true, read: true },
+    preferences: { read: true, update: true },
+    newsletters: { read: true },
   },
 };
 

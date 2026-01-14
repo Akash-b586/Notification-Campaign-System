@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, MapPin, UserPlus, Bell } from 'lucide-react';
+import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react';
 import { Button, Input } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/api';
@@ -31,28 +31,26 @@ export const UserSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await authService.signup({
+      const response = await authService.signup({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
         city: formData.city,
+        role: 'CUSTOMER',
       });
 
-      // After successful signup, log them in
-      const response = await authService.login(formData.email, formData.password);
-      
+      // Signup returns user data with JWT cookie automatically set
       const user = {
-        user_id: response.userId || '1',
-        name: formData.name,
-        email: formData.email,
-        role: 'viewer' as const,
-        userType: 'END_USER' as const,
+        userId: response.userId,
+        name: response.name,
+        email: response.email,
+        role: response.role,
       };
 
       login(user);
       
-      // Redirect based on userType (signup is only for END_USER, so always redirect to /user)
+      // Redirect to user dashboard
       navigate('/user');
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
