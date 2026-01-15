@@ -114,15 +114,15 @@ export const CampaignList: React.FC = () => {
         </Badge>
       ),
     },
-    {
-      key: 'recipientCount',
-      header: 'Recipients',
-      render: (campaign: Campaign) => (
-        <span className="font-medium text-gray-900">
-          {campaign.recipientCount || '-'}
-        </span>
-      ),
-    },
+    // {
+    //   key: 'recipientCount',
+    //   header: 'Recipients',
+    //   render: (campaign: Campaign) => (
+    //     <span className="font-medium text-gray-900">
+    //       {campaign.recipientCount || '-'}
+    //     </span>
+    //   ),
+    // },
     {
       key: 'actions',
       header: 'Actions',

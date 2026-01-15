@@ -51,7 +51,32 @@ export const previewCampaign = async (req: any, res: any) => {
       return res.status(404).json({ message: "Campaign not found" });
     }
 
-    // Get users that are eligible based on city filter and notification preferences
+    // If campaign is already sent/scheduled, show saved recipients
+    if (campaign.status !== 'DRAFT') {
+      const savedRecipients = await prisma.campaignRecipient.findMany({
+        where: { campaignId },
+        include: {
+          user: {
+            select: {
+              userId: true,
+              name: true,
+              email: true,
+              city: true,
+              phone: true,
+            }
+          }
+        }
+      });
+
+      return res.json({
+        status: 'sent',
+        note: 'These are the recipients who received/will receive this campaign',
+        totalRecipients: savedRecipients.length,
+        users: savedRecipients.map(r => r.user),
+      });
+    }
+
+    // For DRAFT campaigns, show eligible users based on current criteria
     const users = await prisma.user.findMany({
       where: {
         isActive: true,
@@ -78,6 +103,8 @@ export const previewCampaign = async (req: any, res: any) => {
     });
 
     return res.json({
+      status: 'draft',
+      note: 'Preview based on current user preferences and criteria. Recipients are captured when campaign is sent.',
       totalEligibleUsers: users.length,
       users,
     });
@@ -100,8 +127,40 @@ export const sendCampaign = async (req: any, res: any) => {
       return res.status(404).json({ message: "Campaign not found" });
     }
 
-    if (campaign.status === "SENT") {
-      return res.status(400).json({ message: "Campaign already sent" });
+    if (campaign.status !== "DRAFT") {
+      return res.status(400).json({ message: "Campaign has already been sent or scheduled" });
+    }
+
+    // Get eligible users based on city filter and notification preferences
+    const eligibleUsers = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        ...(campaign.cityFilter && { city: campaign.cityFilter }),
+        preferences: {
+          some: {
+            notificationType: 'OFFERS',
+            OR: [
+              { email: true },
+              { sms: true },
+              { push: true }
+            ]
+          }
+        }
+      },
+      select: { userId: true },
+    });
+
+    // Capture recipients at send time
+    const recipients = eligibleUsers.map(user => ({
+      campaignId,
+      userId: user.userId,
+    }));
+
+    if (recipients.length > 0) {
+      await prisma.campaignRecipient.createMany({
+        data: recipients,
+        skipDuplicates: true,
+      });
     }
 
     let delay = 0;
@@ -132,8 +191,9 @@ export const sendCampaign = async (req: any, res: any) => {
     return res.json({
       message:
         delay > 0
-          ? "Campaign scheduled successfully"
-          : "Campaign sent successfully",
+          ? `Campaign scheduled successfully for ${recipients.length} recipients`
+          : `Campaign sent successfully to ${recipients.length} recipients`,
+      recipientCount: recipients.length,
       scheduledAt: scheduledAt || null,
     });
 
