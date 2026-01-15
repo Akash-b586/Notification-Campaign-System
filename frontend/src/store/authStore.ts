@@ -57,13 +57,13 @@ export const useAuthStore = create<AuthState>()(
           CREATOR: {
             dashboard: ['read'],
             users: ['create', 'read', 'update'],
-            campaigns: ['create', 'read', 'update', 'send'],
+            campaigns: ['create', 'read', 'update', 'send','download'],
             newsletters: ['create', 'read', 'update', 'publish'],
             logs: ['read'],
           },
           VIEWER: {
             dashboard: ['read'],
-            campaigns: ['read'],
+            campaigns: ['read','download'],
             logs: ['read'],
           },
           CUSTOMER: {

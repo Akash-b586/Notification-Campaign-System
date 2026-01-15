@@ -44,7 +44,7 @@ export const AddStaff: React.FC = () => {
         throw new Error('Role is required');
       }
       if (formData.password.length < 6) {
-        throw new Error('Password must be at least 6 characters');
+        throw new Error('Password must be at least 8 characters');
       }
 
       await staffService.create({

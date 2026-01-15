@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react';
-import { Button, Input } from '../../components/ui';
+import { Button, Input,Select } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/api';
+
+const CITY_OPTIONS = [
+  { label: 'Mumbai', value: 'Mumbai' },
+  { label: 'Delhi', value: 'Delhi' },
+  { label: 'Bengaluru', value: 'Bengaluru' },
+  { label: 'Chennai', value: 'Chennai' },
+  { label: 'Pune', value: 'Pune' },
+  { label: 'Hyderabad', value: 'Hyderabad' },
+];
 
 export const UserSignup: React.FC = () => {
   const navigate = useNavigate();

@@ -1,0 +1,5 @@
+id,name,email,phone,city,is_active
+1,Rahul Khanna,rahul5@test.com,9000000005,Delhi,false
+2,Priya Nair,priya6@test.com,9000000006,Kochi,true
+3,Rohit Patel,rohit7@test.com,9000000007,Ahmedabad,true
+4,Anjali Desai,anjali8@test.com,9000000008,Surat,true

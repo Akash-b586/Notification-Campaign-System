@@ -21,6 +21,10 @@ interface Notification {
     campaignName: string;
     notificationType: string;
   };
+  newsletter?: {
+    title: string;
+    slug: string;
+  };
 }
 
 export const UserNotifications: React.FC = () => {
@@ -102,7 +106,7 @@ export const UserNotifications: React.FC = () => {
       render: (notif: Notification) => (
         <div>
            <div className="font-medium text-gray-900">
-            {notif.campaign?.campaignName || `${notif.notificationType} notification`}
+            {notif.campaign?.campaignName || `${notif.newsletter?.title}`}
           </div>
           <div className="text-sm text-gray-500">
             {notif.notificationType.replace('_', ' ')} • {notif.channel}

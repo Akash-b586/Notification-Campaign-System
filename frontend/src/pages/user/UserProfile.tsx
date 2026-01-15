@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Save, AlertCircle } from "lucide-react";
-import { Card, Button, Input, LoadingSpinner } from "../../components/ui";
+import { Card, Button, Input, LoadingSpinner, Select } from "../../components/ui";
 import { useAuthStore } from "../../store/authStore";
 import { preferenceService } from "../../services/api";
 
@@ -10,6 +10,16 @@ interface ProfileData {
   phone: string;
   city: string;
 }
+
+const cities = [
+  "Delhi",
+  "Mumbai",
+  "Bangalore",
+  "Chennai",
+  "Kolkata",
+  "Hyderabad",
+];
+
 
 export const UserProfile: React.FC = () => {
   const { user, login } = useAuthStore();
@@ -196,6 +206,7 @@ export const UserProfile: React.FC = () => {
                 <Input
                   type="email"
                   name="email"
+                  disabled  
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter your email"
@@ -225,18 +236,26 @@ export const UserProfile: React.FC = () => {
 
               {/* City */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City
-                </label>
-                <Input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="Enter your city"
-                  icon={<MapPin className="w-5 h-5" />}
-                />
-              </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    City
+  </label>
+  <Select
+    value={formData.city}
+    onChange={(e) =>
+      setFormData((prev) => ({
+        ...prev,
+        city: e.target.value,
+      }))
+    }
+    options={[
+      { value: "", label: "Select City" },
+      ...cities.map((city) => ({
+        value: city,
+        label: city,
+      })),
+    ]}
+  />
+</div>
             </div>
 
             {/* Save Button */}

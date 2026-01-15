@@ -11,7 +11,6 @@ export const CreateCampaign: React.FC = () => {
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     campaignName: '',
-    notificationType: '',
     cityFilter: '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +32,6 @@ export const CreateCampaign: React.FC = () => {
       const data = await campaignService.get(campaignId!);
       setFormData({
         campaignName: data.campaignName,
-        notificationType: data.notificationType,
         cityFilter: data.cityFilter || '',
       });
     } catch (err: any) {
@@ -57,7 +55,7 @@ export const CreateCampaign: React.FC = () => {
       } else {
         await campaignService.create({
           campaignName: formData.campaignName,
-          notificationType: formData.notificationType,
+          notificationType: 'OFFERS',
           cityFilter: formData.cityFilter || undefined,
         });
       }
@@ -84,7 +82,7 @@ export const CreateCampaign: React.FC = () => {
       } else {
         const response = await campaignService.create({
           campaignName: formData.campaignName,
-          notificationType: formData.notificationType,
+          notificationType: 'OFFERS',
           cityFilter: formData.cityFilter || undefined,
         });
         campaignIdToPreview = response.id;
@@ -100,7 +98,7 @@ export const CreateCampaign: React.FC = () => {
     }
   };
 
-  const isValid = formData?.campaignName && formData?.notificationType;
+  const isValid = formData?.campaignName;
 
   if (isFetchingCampaign) {
     return (
@@ -152,7 +150,7 @@ export const CreateCampaign: React.FC = () => {
             required
           />
 
-          <Select
+          {/* <Select
             label="Notification Type"
             options={[
               { value: '', label: 'Select notification type' },
@@ -165,7 +163,7 @@ export const CreateCampaign: React.FC = () => {
               setFormData({ ...formData, notificationType: e.target.value })
             }
             required
-          />
+          /> */}
 
           <Select
             label="Target City (Optional)"
@@ -183,14 +181,14 @@ export const CreateCampaign: React.FC = () => {
             <h4 className="font-medium text-blue-900 mb-2">Targeting Criteria</h4>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>✓ User must be active</li>
-              <li>
+              {/* <li>
                 ✓ User must have opted in for{' '}
                 <strong>
                   {formData.notificationType
                     ? formData.notificationType.replace('_', ' ')
                     : 'selected notification type'}
                 </strong>
-              </li>
+              </li> */}
               {formData.cityFilter && (
                 <li>
                   ✓ User must be from <strong>{formData.cityFilter}</strong>

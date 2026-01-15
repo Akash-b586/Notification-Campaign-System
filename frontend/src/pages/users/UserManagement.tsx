@@ -414,13 +414,13 @@ export const UserManagement: React.FC = () => {
             >
               Bulk Upload
             </Button>
-            <Button
+            {/* <Button
               onClick={() => handleOpenModal()}
               variant="primary"
               icon={<Plus className="w-5 h-5" />}
             >
               Add User
-            </Button>
+            </Button> */}
           </div>
         )}
       </div>

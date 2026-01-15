@@ -47,12 +47,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       permission: "users",
     },
     {
-      path: "/preferences",
-      label: "Preferences",
-      icon: <Bell className="w-5 h-5" />,
-      permission: "preferences",
-    },
-    {
       path: "/campaigns",
       label: "Campaigns",
       icon: <Megaphone className="w-5 h-5" />,

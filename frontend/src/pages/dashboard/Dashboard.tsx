@@ -194,7 +194,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         {/* Campaign Distribution */}
-        <Card title="Campaign Distribution" className="col-span-1">
+        {/* <Card title="Campaign Distribution" className="col-span-1">
           <div className="p-6">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={campaignStats}>
@@ -212,7 +212,7 @@ export const Dashboard: React.FC = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Recent Activity */}
