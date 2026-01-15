@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import { ArrowLeft, UserPlus, Check, X } from 'lucide-react';
 import { Button, Card, Input, Select } from '../../components/ui';
 import { staffService } from '../../services/api';
+
+// Password validation regex: At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const validatePassword = (password: string): boolean => {
+  return PASSWORD_REGEX.test(password);
+};
+
+const getPasswordRequirements = (password: string) => {
+  return {
+    minLength: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[@$!%*?&]/.test(password),
+  };
+};
 
 export const AddStaff: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +32,7 @@ export const AddStaff: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
 
   const roles = [
     { value: '', label: 'Select Role' },
@@ -40,11 +58,13 @@ export const AddStaff: React.FC = () => {
       if (!formData.password.trim()) {
         throw new Error('Password is required');
       }
+      if (!validatePassword(formData.password)) {
+        throw new Error(
+          'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)'
+        );
+      }
       if (!formData.role) {
         throw new Error('Role is required');
-      }
-      if (formData.password.length < 6) {
-        throw new Error('Password must be at least 8 characters');
       }
 
       await staffService.create({
@@ -148,14 +168,84 @@ export const AddStaff: React.FC = () => {
               </label>
               <Input
                 type="password"
-                placeholder="Enter password (minimum 6 characters)"
+                placeholder="Enter secure password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, password: e.target.value });
+                  setShowPasswordRequirements(true);
+                }}
+                onFocus={() => setShowPasswordRequirements(true)}
+                onBlur={() => {
+                  if (!formData.password) setShowPasswordRequirements(false);
+                }}
                 disabled={isLoading}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Minimum 6 characters required
-              </p>
+
+              {/* Password Requirements */}
+              {showPasswordRequirements && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs font-medium text-gray-700 mb-2">Password Requirements:</p>
+                  <div className="space-y-1">
+                    {(() => {
+                      const reqs = getPasswordRequirements(formData.password);
+                      return (
+                        <>
+                          <div className="flex items-center gap-2">
+                            {reqs.minLength ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className={`text-xs ${reqs.minLength ? 'text-green-700' : 'text-gray-600'}`}>
+                              At least 8 characters
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {reqs.uppercase ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className={`text-xs ${reqs.uppercase ? 'text-green-700' : 'text-gray-600'}`}>
+                              1 uppercase letter (A-Z)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {reqs.lowercase ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className={`text-xs ${reqs.lowercase ? 'text-green-700' : 'text-gray-600'}`}>
+                              1 lowercase letter (a-z)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {reqs.number ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className={`text-xs ${reqs.number ? 'text-green-700' : 'text-gray-600'}`}>
+                              1 number (0-9)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {reqs.special ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <X className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className={`text-xs ${reqs.special ? 'text-green-700' : 'text-gray-600'}`}>
+                              1 special character (@$!%*?&)
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Role Selection */}
