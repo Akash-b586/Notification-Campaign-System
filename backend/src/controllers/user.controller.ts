@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma";
 import { hashPassword } from "../utils/hash";
+import { NotificationType } from "@prisma/client";
 
 export const getAllUsers = async (req: any, res: any) => {
   try {
@@ -84,6 +85,14 @@ export const createUser = async (req: any, res: any) => {
         city,
         role: role || "CUSTOMER",
         isActive: true,
+        preferences:{
+          createMany:{
+            data: [
+              { notificationType: "OFFERS" },
+              { notificationType: "ORDER_UPDATES" }
+            ]
+          }
+        }
       },
       select: {
         userId: true,

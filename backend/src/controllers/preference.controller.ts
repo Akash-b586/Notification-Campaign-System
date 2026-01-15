@@ -333,6 +333,12 @@ export const getMyNotificationLogs = async (req: any, res: any) => {
             notificationType: true,
           },
         },
+        newsletter: {
+          select: {
+            title: true,
+            slug: true,
+          },
+        }  
       },
       orderBy: {
         sentAt: 'desc',
