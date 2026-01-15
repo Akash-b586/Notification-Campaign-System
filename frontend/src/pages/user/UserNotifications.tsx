@@ -25,6 +25,17 @@ interface Notification {
     title: string;
     slug: string;
   };
+  order?: {
+    id: string;
+    orderNumber: string;
+    status: string;
+    createdAt: string;
+    product?: {
+      id: string;
+      name: string;
+      price: number;
+    };
+  };
 }
 
 export const UserNotifications: React.FC = () => {
@@ -103,16 +114,39 @@ export const UserNotifications: React.FC = () => {
     {
       key: "campaign",
       header: "Campaign / Type",
-      render: (notif: Notification) => (
-        <div>
-           <div className="font-medium text-gray-900">
-            {notif.campaign?.campaignName || `${notif.newsletter?.title}`}
+      render: (notif: Notification) => {
+        let heading = "";
+        let type = "";
+        let details = "";
+        
+        if (notif.campaign) {
+          heading = notif.campaign.campaignName;
+          type = notif.campaign.notificationType;
+        } else if (notif.newsletter) {
+          heading = notif.newsletter.title;
+          type = "NEWSLETTER";
+        } else if (notif.order) {
+          heading = `Order #${notif.order.orderNumber}`;
+          type = "ORDER_UPDATES";
+          if (notif.order.product) {
+            details = `${notif.order.product.name} • ₹${notif.order.product.price} • ${notif.order.status}`;
+          }
+        } else {
+          heading = notif.notificationType.replace('_', ' ');
+          type = notif.notificationType;
+        }
+        
+        return (
+          <div>
+            <div className="font-medium text-gray-900">
+              {heading}
+            </div>
+            <div className="text-sm text-gray-500">
+              {details || `${type.replace('_', ' ')} • ${notif.channel}`}
+            </div>
           </div>
-          <div className="text-sm text-gray-500">
-            {notif.notificationType.replace('_', ' ')} • {notif.channel}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "status",

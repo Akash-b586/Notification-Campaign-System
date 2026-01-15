@@ -22,33 +22,35 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    path: "/user/profile",
-    label: "My Profile",
-    icon: <User className="w-5 h-5" />,
-  },
-  
-  {
-  path: "/user/newsletters",
-  label: "Newsletters",
-  icon: <Mail className="w-5 h-5" />,
-},
-{
-    path: "/user/preferences",
-    label: "My Preferences",
-    icon: <Settings className="w-5 h-5" />,
+    path: "/user",
+    label: "My Dashboard",
+    icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
     path: "/user/orders",
     label: "My Orders",
     icon: <ShoppingBag className="w-5 h-5" />,
   },
-  
+  {
+  path: "/user/newsletters",
+  label: "Newsletters",
+  icon: <Mail className="w-5 h-5" />,
+},
+  {
+    path: "/user/preferences",
+    label: "My Preferences",
+    icon: <Settings className="w-5 h-5" />,
+  },
   {
     path: "/user/notifications",
     label: "My Notifications",
     icon: <Inbox className="w-5 h-5" />,
   },
-  
+  {
+    path: "/user/profile",
+    label: "My Profile",
+    icon: <User className="w-5 h-5" />,
+  },
 ];
 
 export const UserDashboardLayout: React.FC = () => {

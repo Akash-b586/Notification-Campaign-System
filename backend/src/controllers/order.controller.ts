@@ -2,10 +2,12 @@ import prisma from "../config/prisma";
 
 export const createOrder = async (req: any, res: any) => {
   try {
-    const { orderNumber, userId } = req.body;
+    const { orderNumber, userId, productId } = req.body;
 
-    if (!orderNumber || !userId) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!orderNumber || !userId || !productId) {
+      return res.status(400).json({
+        message: "Missing required fields: orderNumber, userId, productId",
+      });
     }
 
     // Check if user exists
@@ -15,6 +17,19 @@ export const createOrder = async (req: any, res: any) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if product exists
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    if (!product.isActive) {
+      return res.status(400).json({ message: "Product is not available" });
     }
 
     // Check if order number already exists
@@ -30,16 +45,26 @@ export const createOrder = async (req: any, res: any) => {
       data: {
         orderNumber,
         userId,
-        status: "CREATED",
+        productId,
+      },
+      include: {
+        product: true,
+        user: {
+          select: {
+            userId: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
     // Create notification logs for ORDER_UPDATES when order is created
-    await createOrderNotificationLogs(order.id, userId, 'CREATED');
+    await createOrderNotificationLogs(order.id, userId, "CREATED");
 
     res.status(201).json({
       message: "Order created successfully",
-      order,
+      order: formatOrderResponse(order),
     });
   } catch (err) {
     console.error(err);
@@ -54,6 +79,7 @@ export const getOrder = async (req: any, res: any) => {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
+        product: true,
         user: {
           select: {
             userId: true,
@@ -69,7 +95,7 @@ export const getOrder = async (req: any, res: any) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    res.json(order);
+    res.json(formatOrderResponse(order));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch order" });
@@ -80,6 +106,7 @@ export const getAllOrders = async (req: any, res: any) => {
   try {
     const orders = await prisma.order.findMany({
       include: {
+        product: true,
         user: {
           select: {
             userId: true,
@@ -93,7 +120,7 @@ export const getAllOrders = async (req: any, res: any) => {
       },
     });
 
-    res.json(orders);
+    res.json(orders.map(formatOrderResponse));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch orders" });
@@ -107,6 +134,7 @@ export const getUserOrders = async (req: any, res: any) => {
     const orders = await prisma.order.findMany({
       where: { userId },
       include: {
+        product: true,
         logs: true,
       },
       orderBy: {
@@ -114,7 +142,7 @@ export const getUserOrders = async (req: any, res: any) => {
       },
     });
 
-    res.json(orders);
+    res.json(orders.map(formatOrderResponse));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch user orders" });
@@ -146,6 +174,9 @@ export const updateOrderStatus = async (req: any, res: any) => {
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: { status },
+      include: {
+        product: true,
+      },
     });
 
     // Create notification logs for the status change
@@ -153,7 +184,7 @@ export const updateOrderStatus = async (req: any, res: any) => {
 
     res.json({
       message: "Order status updated successfully",
-      order: updatedOrder,
+      order: formatOrderResponse(updatedOrder),
     });
   } catch (err) {
     console.error(err);
@@ -184,6 +215,17 @@ export const deleteOrder = async (req: any, res: any) => {
   }
 };
 
+// Helper function to format order response
+function formatOrderResponse(order: any) {
+  return {
+    ...order,
+    product: order.product ? {
+      ...order.product,
+      price: parseFloat(order.product.price.toString()),
+    } : null,
+  };
+}
+
 // Helper function to create notification logs for order updates
 async function createOrderNotificationLogs(
   orderId: string,
@@ -191,22 +233,20 @@ async function createOrderNotificationLogs(
   orderStatus: string
 ): Promise<void> {
   try {
-    // Get user's ORDER_UPDATES notification preferences
     let preferences = await prisma.notificationPreference.findUnique({
       where: {
         userId_notificationType: {
           userId,
-          notificationType: 'ORDER_UPDATES',
+          notificationType: "ORDER_UPDATES",
         },
       },
     });
 
-    // If no preference exists, treat as opt-in by default
     if (!preferences) {
       preferences = {
-        id: '',
+        id: "",
         userId,
-        notificationType: 'ORDER_UPDATES',
+        notificationType: "ORDER_UPDATES",
         email: true,
         sms: true,
         push: true,
@@ -214,8 +254,7 @@ async function createOrderNotificationLogs(
       };
     }
 
-    // Create notification log for each enabled channel
-    const channels = ['EMAIL', 'SMS', 'PUSH'] as const;
+    const channels = ["EMAIL", "SMS", "PUSH"] as const;
     const logData: any[] = [];
 
     for (const channel of channels) {
@@ -223,9 +262,9 @@ async function createOrderNotificationLogs(
       if (isChannelEnabled) {
         logData.push({
           userId,
-          notificationType: 'ORDER_UPDATES',
+          notificationType: "ORDER_UPDATES",
           channel,
-          status: 'SUCCESS',
+          status: "SUCCESS",
           orderId,
         });
       }
@@ -237,7 +276,6 @@ async function createOrderNotificationLogs(
       });
     }
   } catch (err) {
-    console.error('Failed to create order notification logs:', err);
-    // Don't throw - order creation should succeed even if notification logging fails
+    console.error("Failed to create order notification logs:", err);
   }
 }

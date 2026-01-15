@@ -55,22 +55,22 @@ export const UserOrders: React.FC = () => {
 
   const columns = [
     {
-      key: "id",
-      header: "Order ID",
+      key: "orderNumber",
+      header: "Order Number",
       render: (order: Order) => (
-        <span className="font-mono text-sm text-gray-600">
-          {order.id}
+        <span className="font-mono text-sm font-semibold text-gray-900">
+          {order.orderNumber}
         </span>
       ),
     },
     {
-      key: "productName",
+      key: "product",
       header: "Product",
       render: (order: Order) => (
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4 text-gray-400" />
           <span className="font-medium text-gray-900">
-            {order.productName}
+            {order.product?.name || "N/A"}
           </span>
         </div>
       ),
@@ -82,9 +82,7 @@ export const UserOrders: React.FC = () => {
         <div className="flex items-center gap-1 font-semibold text-gray-900">
           <IndianRupee className="w-4 h-4" />
           <span>
-            {typeof order.amount === "number"
-              ? order.amount.toLocaleString("en-IN")
-              : order.amount}
+            {order.product?.price ? order.product.price.toLocaleString("en-IN") : "0"}
           </span>
         </div>
       ),

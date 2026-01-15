@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Package, IndianRupee, Edit2, Trash2 } from "lucide-react";
-import { Button, Card, Table, Badge, LoadingSpinner, Modal, Select } from "../../components/ui";
-import { orderService } from "../../services/api";
-import type { Order } from "../../types";
+import { Package, IndianRupee, Edit2, Trash2, Plus } from "lucide-react";
+import { Button, Card, Table, Badge, LoadingSpinner, Modal, Select, Input } from "../../components/ui";
+import { orderService, productService } from "../../services/api";
+import type { Order, Product } from "../../types";
 
 export const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -13,9 +14,18 @@ export const OrderManagement: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Product creation state
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
+  const [productError, setProductError] = useState("");
 
   useEffect(() => {
     fetchOrders();
+    fetchProducts();
   }, []);
 
   const fetchOrders = async () => {
@@ -28,6 +38,54 @@ export const OrderManagement: React.FC = () => {
       setError(err.message || "Failed to load orders");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const data = await productService.list();
+      setProducts(data);
+    } catch (err: any) {
+      console.error("Failed to fetch products:", err);
+    }
+  };
+
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!productName || !productPrice) {
+      setProductError("Product name and price are required");
+      return;
+    }
+
+    const price = parseFloat(productPrice);
+    if (isNaN(price) || price <= 0) {
+      setProductError("Please enter a valid price");
+      return;
+    }
+
+    setIsCreatingProduct(true);
+    setProductError("");
+
+    try {
+      await productService.create({
+        name: productName,
+        description: productDescription || undefined,
+        price,
+      });
+
+      // Reset form and close modal
+      setProductName("");
+      setProductDescription("");
+      setProductPrice("");
+      setShowProductModal(false);
+      
+      // Refresh products list
+      await fetchProducts();
+    } catch (err: any) {
+      setProductError(err.message || "Failed to create product");
+    } finally {
+      setIsCreatingProduct(false);
     }
   };
 
@@ -101,10 +159,27 @@ export const OrderManagement: React.FC = () => {
       ),
     },
     {
-      key: "userId",
-      header: "User ID",
+      key: "product",
+      header: "Product",
       render: (order: Order) => (
-        <span className="text-sm text-gray-600">{order.userId.substring(0, 8)}...</span>
+        <div className="flex items-center gap-2">
+          <Package className="w-4 h-4 text-gray-400" />
+          <span className="font-medium text-gray-900">
+            {order.product?.name || "N/A"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      render: (order: Order) => (
+        <div className="flex items-center gap-1 font-semibold text-gray-900">
+          <IndianRupee className="w-4 h-4" />
+          <span>
+            {order.product?.price ? order.product.price.toLocaleString("en-IN") : "0"}
+          </span>
+        </div>
       ),
     },
     {
@@ -180,11 +255,20 @@ export const OrderManagement: React.FC = () => {
   return (
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
-        <p className="text-gray-600 mt-1">
-          Manage all customer orders and update their status
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
+          <p className="text-gray-600 mt-1">
+            Manage all customer orders and update their status
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          icon={<Plus className="w-5 h-5" />}
+          onClick={() => setShowProductModal(true)}
+        >
+          Add Product
+        </Button>
       </div>
 
       {/* Error Message */}
@@ -192,6 +276,21 @@ export const OrderManagement: React.FC = () => {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
+      )}
+
+      {/* Products Section */}
+      {products.length > 0 && (
+        <Card className="p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Available Products ({products.length})</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {products.map((product) => (
+              <div key={product.id} className="border rounded-lg p-3 bg-gray-50">
+                <p className="font-medium text-gray-900 text-sm">{product.name}</p>
+                <p className="text-green-600 font-semibold text-sm">₹{product.price}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {/* Stats */}
@@ -311,6 +410,83 @@ export const OrderManagement: React.FC = () => {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Add Product Modal */}
+      <Modal
+        isOpen={showProductModal}
+        title="Add New Product"
+        onClose={() => {
+          setShowProductModal(false);
+          setProductName("");
+          setProductDescription("");
+          setProductPrice("");
+          setProductError("");
+        }}
+      >
+        <form onSubmit={handleCreateProduct} className="space-y-4">
+          {productError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {productError}
+            </div>
+          )}
+
+          <Input
+            label="Product Name"
+            placeholder="Enter product name"
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            required
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description (Optional)
+            </label>
+            <textarea
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              placeholder="Enter product description"
+              value={productDescription}
+              onChange={(e) => setProductDescription(e.target.value)}
+            />
+          </div>
+
+          <Input
+            label="Price (₹)"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Enter price"
+            value={productPrice}
+            onChange={(e) => setProductPrice(e.target.value)}
+            required
+          />
+
+          <div className="flex gap-2 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowProductModal(false);
+                setProductName("");
+                setProductDescription("");
+                setProductPrice("");
+                setProductError("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isCreatingProduct}
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Create Product
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

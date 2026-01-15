@@ -28,6 +28,15 @@ export const getNotificationLogs = async (req: any, res: any) => {
           select: {
             id: true,
             orderNumber: true,
+            status: true,
+            createdAt: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+              },
+            },
           },
         },
         user: {

@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react';
-import { Button, Input,Select } from '../../components/ui';
+import { Button, Input } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/api';
-
-const CITY_OPTIONS = [
-  { label: 'Mumbai', value: 'Mumbai' },
-  { label: 'Delhi', value: 'Delhi' },
-  { label: 'Bengaluru', value: 'Bengaluru' },
-  { label: 'Chennai', value: 'Chennai' },
-  { label: 'Pune', value: 'Pune' },
-  { label: 'Hyderabad', value: 'Hyderabad' },
-];
 
 export const UserSignup: React.FC = () => {
   const navigate = useNavigate();
@@ -113,6 +104,7 @@ export const UserSignup: React.FC = () => {
               type="tel"
               label="Phone Number"
               placeholder="+91 9999999999"
+              maxLength={10}
               icon={<Phone className="w-5 h-5" />}
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -126,7 +118,6 @@ export const UserSignup: React.FC = () => {
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
             />
-
             <Input
               type="password"
               label="Password"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Download, Send, Users, CheckCircle, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Download, Send, Users, CheckCircle, Calendar } from 'lucide-react';
 import {
   Button,
   Card,
@@ -18,7 +18,6 @@ export const RecipientPreview: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { hasPermission } = useAuthStore();
   const [campaign, setCampaign] = useState<any>(location.state || null);
   const [eligibleUsers, setEligibleUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,9 +28,6 @@ export const RecipientPreview: React.FC = () => {
   const [scheduledDateTime, setScheduledDateTime] = useState<string>('');
   const [sendError, setSendError] = useState('');
 
-  const canSend = hasPermission('campaigns', 'send');
-  const canDownload = hasPermission('campaigns', 'download');
-
   useEffect(() => {
     if (campaignId) {
       fetchCampaignData();
@@ -40,7 +36,8 @@ export const RecipientPreview: React.FC = () => {
   }, [campaignId]);
 
   const fetchCampaignData = async () => {
-    if (campaign && campaign.campaignName) return; // Already have campaign data from navigation
+    // Only fetch if we don't have campaign data with status
+    if (campaign && campaign.status) return;
     
     try {
       const data = await campaignService.get(campaignId!);
@@ -80,7 +77,6 @@ export const RecipientPreview: React.FC = () => {
   };
 
   const handleSend = async () => {
-    // Validate scheduled time if sending is scheduled
     if (sendType === 'scheduled') {
       if (!scheduledDateTime) {
         setSendError('Please select a date and time for scheduling');
@@ -205,7 +201,7 @@ export const RecipientPreview: React.FC = () => {
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="w-4 h-4 text-green-600" />
               <span className="text-gray-700">
-                User must have opted in for notifications
+                User must have opted in for OFFERS notifications
               </span>
             </div>
           </div>
@@ -236,7 +232,7 @@ export const RecipientPreview: React.FC = () => {
 
         <Card className="p-6">
           <div className="space-y-3">
-            {canDownload && (
+            {campaign && (
               <Button
                 variant="outline"
                 onClick={handleDownloadCSV}
@@ -246,7 +242,7 @@ export const RecipientPreview: React.FC = () => {
                 Download CSV
               </Button>
             )}
-            {canSend && campaign && campaign.status === 'DRAFT' && (
+            {campaign && campaign.status === 'DRAFT' && (
               <Button
                 variant="success"
                 onClick={() => setShowConfirmModal(true)}

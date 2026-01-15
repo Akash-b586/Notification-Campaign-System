@@ -5,7 +5,9 @@ import { preferenceService } from "../../services/api";
 import type { NotificationPreference, NotificationType } from "../../types";
 
 export const UserPreferences: React.FC = () => {
-  const [preferences, setPreferences] = useState<Record<NotificationType, NotificationPreference>>({} as Record<NotificationType, NotificationPreference>);
+  const [preferences, setPreferences] = useState<
+    Record<NotificationType, NotificationPreference>
+  >({} as Record<NotificationType, NotificationPreference>);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -18,13 +20,14 @@ export const UserPreferences: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-       const prefsArray = await preferenceService.getAllNotificationPreferences();
+      const prefsArray =
+        await preferenceService.getAllNotificationPreferences();
       // Convert array to object keyed by notificationType
       const prefsObject = prefsArray.reduce((acc: any, pref: any) => {
         acc[pref.notificationType] = pref;
         return acc;
       }, {});
-      
+
       setPreferences(prefsObject);
     } catch (err: any) {
       setError(err.message || "Failed to load data");
@@ -33,29 +36,43 @@ export const UserPreferences: React.FC = () => {
     }
   };
 
-  const handleToggle = async (notificationType: NotificationType, channel: 'email' | 'sms' | 'push') => {
+  const handleToggle = async (
+    notificationType: NotificationType,
+    channel: "email" | "sms" | "push"
+  ) => {
     if (isSaving) return;
 
     setIsSaving(true);
     const currentPref = preferences[notificationType];
+
+    // If no preference exists, create one with default false values
+    const defaultPref = {
+      email: false,
+      sms: false,
+      push: false,
+    };
+
     const updatedPreferences = {
       ...preferences,
       [notificationType]: {
-        ...currentPref,
-        [channel]: !currentPref?.[channel],
+        ...(currentPref || defaultPref),
+        [channel]: !((currentPref || defaultPref)?.[channel] ?? false),
       },
     };
 
     setPreferences(updatedPreferences);
 
     try {
-       const updateData = {
+      const updateData = {
         email: updatedPreferences[notificationType].email,
         sms: updatedPreferences[notificationType].sms,
         push: updatedPreferences[notificationType].push,
       };
-      
-      await preferenceService.updateNotificationPreferences(notificationType, updateData);
+
+      await preferenceService.updateNotificationPreferences(
+        notificationType,
+        updateData
+      );
       setSuccessMessage("Preferences updated successfully!");
       setError("");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -94,10 +111,14 @@ export const UserPreferences: React.FC = () => {
     // },
   ];
 
-  const channels: Array<{ key: 'email' | 'sms' | 'push'; label: string; icon: React.ReactNode }> = [
-    { key: 'email', label: 'Email', icon: <Mail className="w-4 h-4" /> },
-    { key: 'sms', label: 'SMS', icon: <Smartphone className="w-4 h-4" /> },
-    { key: 'push', label: 'Push', icon: <Bell className="w-4 h-4" /> },
+  const channels: Array<{
+    key: "email" | "sms" | "push";
+    label: string;
+    icon: React.ReactNode;
+  }> = [
+    { key: "email", label: "Email", icon: <Mail className="w-4 h-4" /> },
+    { key: "sms", label: "SMS", icon: <Smartphone className="w-4 h-4" /> },
+    { key: "push", label: "Push", icon: <Bell className="w-4 h-4" /> },
   ];
 
   if (isLoading) {
@@ -141,18 +162,21 @@ export const UserPreferences: React.FC = () => {
             <div className={`p-3 rounded-xl ${type.bgColor} mb-4 inline-block`}>
               <div className={type.color}>{type.icon}</div>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">
-              {type.title}
-            </h3>
+            <h3 className="font-semibold text-gray-900 mb-2">{type.title}</h3>
             <p className="text-sm text-gray-600 mb-4">{type.description}</p>
-            
+
             {/* Channel preferences */}
             <div className="space-y-3 border-t pt-4">
               {channels.map((channel) => (
-                <div key={channel.key} className="flex items-center justify-between">
+                <div
+                  key={channel.key}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-gray-500">{channel.icon}</span>
-                    <span className="text-sm text-gray-700">{channel.label}</span>
+                    <span className="text-sm text-gray-700">
+                      {channel.label}
+                    </span>
                   </div>
                   <ToggleSwitch
                     checked={preferences[type.key]?.[channel.key] || false}

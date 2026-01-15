@@ -2,12 +2,39 @@ import prisma from "../config/prisma";
 import { hashPassword, comparePassword } from "../utils/hash";
 import { signToken } from "../utils/jwt";
 
+// Password regex: At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const PHONE_REGEX = /^(\+91[-\s]?)?[0-9]{10}$/;
+
+const validatePassword = (password: string): boolean => {
+  return PASSWORD_REGEX.test(password);
+};
+
+const validatePhone = (phone: string): boolean => {
+  return PHONE_REGEX.test(phone);
+};
+
 export const signup = async (req: any, res: any) => {
   try {
     const { name, email, password, phone, city, role } = req.body;
 
-    if (!email || !password || !name || password.length < 6) {
-      return res.status(400).json({ message: "Missing required fields or password too short" });
+    if (!email || !password || !name || !phone || !city) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    
+    // Validate password format
+    if (!validatePassword(password)) {
+      return res.status(400).json({ 
+        message: "Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)" 
+      });
+    }
+
+     // Validate phone format
+    if (!validatePhone(phone)) {
+      return res.status(400).json({ 
+        message: "Phone number must be a valid 10-digit number (can include +91 prefix)" 
+      });
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -62,6 +89,13 @@ export const login = async (req: any, res: any) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
+    // Validate password format
+    if (!validatePassword(password)) {
+      return res.status(400).json({ 
+        message: "Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)" 
+      });
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -106,3 +140,24 @@ export const logout = (req: any, res: any) => {
   res.clearCookie("jwt");
   res.json({ message: "Logged out successfully" });
 };
+
+
+// const fn =async ()=>{
+//   const hashedPassword = await hashPassword("Admin@1234");
+
+//     await prisma.user.create({
+//       data: {
+//         name : "admin",
+//         email:"admin@gmail.com",
+//         password: hashedPassword,
+//         phone: "9876543210",
+//         city:"Delhi",
+//         role:"ADMIN",
+//         isActive: true,
+//       },
+//     });
+
+//     console.log("USer created")
+// };
+
+// fn()

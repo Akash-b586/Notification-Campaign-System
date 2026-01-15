@@ -69,6 +69,17 @@ export interface Campaign {
   recipientCount?: number;
 }
 
+// Product Types
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Order Types
 export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
@@ -76,9 +87,9 @@ export interface Order {
   id: string;
   orderNumber: string;
   userId: string;
-  productName: string;
-  amount: number;
+  productId: string;
   status: OrderStatus;
+  product?: Product;
   createdAt: string;
   updatedAt: string;
 }

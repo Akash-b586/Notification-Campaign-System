@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Lock } from 'lucide-react';
 import { Button, Card, Input, Select } from '../../components/ui';
 import { useAuthStore } from '../../store/authStore';
 import { campaignService } from '../../services/api';
@@ -18,6 +18,7 @@ export const CreateCampaign: React.FC = () => {
   const [error, setError] = useState('');
 
   const isEditMode = !!campaignId;
+  const canCreateCampaign = user?.role === 'ADMIN' || user?.role === 'CREATOR';
 
   useEffect(() => {
     if (isEditMode) {
@@ -85,7 +86,8 @@ export const CreateCampaign: React.FC = () => {
           notificationType: 'OFFERS',
           cityFilter: formData.cityFilter || undefined,
         });
-        campaignIdToPreview = response.id;
+        console.log("Idhar dekho", response);
+        campaignIdToPreview = response.id || response.campaignId;
       }
 
       navigate(`/campaigns/${campaignIdToPreview}/preview`, {
@@ -104,6 +106,42 @@ export const CreateCampaign: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-gray-600">Loading campaign...</div>
+      </div>
+    );
+  }
+
+  // Block access if user doesn't have permission
+  if (!canCreateCampaign) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div>
+          <Button
+            variant="outline"
+            icon={<ArrowLeft className="w-5 h-5" />}
+            onClick={() => navigate('/campaigns')}
+            size="sm"
+          >
+            Back to Campaigns
+          </Button>
+        </div>
+        <Card className="p-8">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <Lock className="w-12 h-12 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600">
+              Only Admins and Creators can create campaigns. Your current role is <strong>{user?.role}</strong>.
+            </p>
+            <Button
+              onClick={() => navigate('/campaigns')}
+              variant="primary"
+              className="mt-4"
+            >
+              Back to Campaigns
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -150,21 +188,6 @@ export const CreateCampaign: React.FC = () => {
             required
           />
 
-          {/* <Select
-            label="Notification Type"
-            options={[
-              { value: '', label: 'Select notification type' },
-              { value: 'OFFERS', label: 'Promotional Offers' },
-              { value: 'ORDER_UPDATES', label: 'Order Updates' },
-              { value: 'NEWSLETTER', label: 'Newsletter' },
-            ]}
-            value={formData.notificationType}
-            onChange={(e) =>
-              setFormData({ ...formData, notificationType: e.target.value })
-            }
-            required
-          /> */}
-
           <Select
             label="Target City (Optional)"
             options={cities.map((city) => ({
@@ -181,14 +204,6 @@ export const CreateCampaign: React.FC = () => {
             <h4 className="font-medium text-blue-900 mb-2">Targeting Criteria</h4>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>✓ User must be active</li>
-              {/* <li>
-                ✓ User must have opted in for{' '}
-                <strong>
-                  {formData.notificationType
-                    ? formData.notificationType.replace('_', ' ')
-                    : 'selected notification type'}
-                </strong>
-              </li> */}
               {formData.cityFilter && (
                 <li>
                   ✓ User must be from <strong>{formData.cityFilter}</strong>

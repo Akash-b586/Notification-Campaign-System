@@ -26,8 +26,12 @@ export const createCampaign = async (req: any, res: any) => {
     });
 
     return res.status(201).json({
+      id:campaign.id,
       campaignId: campaign.id,
       status: campaign.status,
+      campaignName: campaign.campaignName,  // Add these for consistency
+      cityFilter: campaign.cityFilter,
+      notificationType: campaign.notificationType,
     });
   } catch (err) {
     console.error(err);

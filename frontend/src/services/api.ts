@@ -240,10 +240,67 @@ export const preferenceService = {
   },
 };
 
+export const productService = {
+  list: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/products`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch products');
+    }
+  },
+
+  get: async (productId: string) => {
+    try {
+      const response = await axios.get(`${API_URL}/products/${productId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch product');
+    }
+  },
+
+  create: async (data: {
+    name: string;
+    description?: string;
+    price: number;
+  }) => {
+    try {
+      const response = await axios.post(`${API_URL}/products`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to create product');
+    }
+  },
+
+  update: async (productId: string, data: {
+    name?: string;
+    description?: string;
+    price?: number;
+    isActive?: boolean;
+  }) => {
+    try {
+      const response = await axios.patch(`${API_URL}/products/${productId}`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to update product');
+    }
+  },
+
+  delete: async (productId: string) => {
+    try {
+      const response = await axios.delete(`${API_URL}/products/${productId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to delete product');
+    }
+  },
+};
+
 export const orderService = {
   create: async (data: {
     orderNumber: string;
     userId: string;
+    productId: string;
   }) => {
     try {
       const response = await axios.post(`${API_URL}/orders`, data);

@@ -10,6 +10,7 @@ import logRoutes from "./routes/log.routes";
 import statsRoutes from "./routes/stats.routes";
 import staffRoutes from "./routes/staff.routes";
 import orderRoutes from "./routes/order.routes";
+import productRoutes from "./routes/product.routes";
 import newsletterRoutes from "./routes/newsletter.routes";
 import { authenticate } from "./middleware/auth.middleware";
 
@@ -26,8 +27,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Public routes (AUTH)
+// Public routes (AUTH & PRODUCTS)
 app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes); // Products publicly viewable
 
 // Protected routes
 app.use(authenticate);

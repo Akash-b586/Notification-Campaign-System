@@ -19,6 +19,7 @@ export const UserLogin: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
     setIsLoading(true);
 
     try {
@@ -90,16 +91,6 @@ export const UserLogin: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
             />
-
-            {/* <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                <span className="text-sm text-gray-600">Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                Forgot password?
-              </Link>
-            </div> */}
 
             <Button
               type="submit"

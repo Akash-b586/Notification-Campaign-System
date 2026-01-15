@@ -47,12 +47,12 @@ export const UserDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       const logs = await preferenceService.getMyNotificationLogs();
-
+      console.log(logs);
       setStats({
         totalNotifications: logs.length,
         lastNotification: logs[0]
           ? {
-              title: logs[0].campaign.campaignName || `${logs[0].notificationType} Notification`,
+              title: logs[0].campaign?.campaignName || `${logs[0].newsletter.title}`,
               date: new Date(logs[0].sentAt).toLocaleDateString(),
             }
           : null,

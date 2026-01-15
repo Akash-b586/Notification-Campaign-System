@@ -338,7 +338,22 @@ export const getMyNotificationLogs = async (req: any, res: any) => {
             title: true,
             slug: true,
           },
-        }  
+        },
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            createdAt: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         sentAt: 'desc',
