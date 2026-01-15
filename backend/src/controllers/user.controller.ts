@@ -16,7 +16,6 @@ export const getAllUsers = async (req: any, res: any) => {
         isActive: true,
         createdAt: true,
       },
-      where: {role: 'CUSTOMER'}, 
       orderBy: { name: 'asc' },
     });
 

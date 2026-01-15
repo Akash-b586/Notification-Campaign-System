@@ -10,6 +10,7 @@ import {
   UserPlus,
   Mail,
   ShoppingCart,
+  User,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
@@ -75,6 +76,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Notification Logs",
       icon: <FileText className="w-5 h-5" />,
       permission: "logs",
+    },
+    {
+      path: "/staff/profile",
+      label: "My Profile",
+      icon: <User className="w-5 h-5" />,
     },
   ];
 

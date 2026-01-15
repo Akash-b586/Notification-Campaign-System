@@ -20,7 +20,7 @@ import {
   UserNotifications,
   UserProfile 
 } from './pages/user';
-import { AddStaff } from './pages/staff';
+import { AddStaff, StaffProfile } from './pages/staff';
 import { useAuthStore } from './store/authStore';
 
 function App() {
@@ -80,6 +80,7 @@ function App() {
           <Route path="newsletters/:newsletterId/edit" element={<CreateNewsletter />} />
           <Route path="logs" element={<NotificationLogs />} />
           <Route path="staff/add" element={<AddStaff />} />
+          <Route path="staff/profile" element={<StaffProfile />} />
         </Route>
 
         {/* Catch all */}

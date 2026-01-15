@@ -295,14 +295,19 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.userId.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredUsers = users.filter((u) => {
+    // Exclude current logged-in user
+    if (user && u.userId === user.userId) {
+      return false;
+    }
 
-    const matchesCity = !selectedCity || user.city === selectedCity;
-    const matchesActive = !showActiveOnly || user.isActive;
+    const matchesSearch =
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.userId.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCity = !selectedCity || u.city === selectedCity;
+    const matchesActive = !showActiveOnly || u.isActive;
 
     return matchesSearch && matchesCity && matchesActive;
   });
