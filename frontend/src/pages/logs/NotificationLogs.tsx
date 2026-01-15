@@ -164,6 +164,16 @@ export const NotificationLogs: React.FC = () => {
       },
     },
     {
+      key: 'channel',
+      header: 'Channel / Type',
+      render: (log: NotificationLog) => (
+        <div>
+          <div className="font-medium text-gray-900">{log.channel}</div>
+          <div className="text-xs text-gray-500">{log.notificationType.replace('_', ' ')}</div>
+        </div>
+      ),
+    },
+    {
       key: 'sentAt',
       header: 'Sent At',
       render: (log: NotificationLog) => (
