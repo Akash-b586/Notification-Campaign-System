@@ -376,7 +376,6 @@ export const newsletterService = {
   },
 
   create: async (data: {
-    slug: string;
     title: string;
     description?: string;
     isActive?: boolean;

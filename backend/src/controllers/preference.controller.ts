@@ -175,7 +175,6 @@ export const getNewsletterSubscriptions = async (req: any, res: any) => {
           select: {
             id: true,
             title: true,
-            slug: true,
             description: true,
             isActive: true,
           },
@@ -336,7 +335,6 @@ export const getMyNotificationLogs = async (req: any, res: any) => {
         newsletter: {
           select: {
             title: true,
-            slug: true,
           },
         },
         order: {

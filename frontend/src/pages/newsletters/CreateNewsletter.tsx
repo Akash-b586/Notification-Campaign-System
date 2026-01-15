@@ -8,7 +8,6 @@ export const CreateNewsletter: React.FC = () => {
   const navigate = useNavigate();
   const { newsletterId } = useParams<{ newsletterId: string }>();
   const [formData, setFormData] = useState({
-    slug: "",
     title: "",
     description: "",
     isActive: true,
@@ -31,7 +30,6 @@ export const CreateNewsletter: React.FC = () => {
     try {
       const data = await newsletterService.get(newsletterId!);
       setFormData({
-        slug: data.slug,
         title: data.title,
         description: data.description || "",
         isActive: data.isActive,
@@ -57,7 +55,6 @@ export const CreateNewsletter: React.FC = () => {
         });
       } else {
         await newsletterService.create({
-          slug: formData.slug,
           title: formData.title,
           description: formData.description || undefined,
           isActive: formData.isActive,
@@ -71,7 +68,7 @@ export const CreateNewsletter: React.FC = () => {
     }
   };
 
-  const isValid = formData.title && (isEditMode || formData.slug);
+  const isValid = formData.title;
 
   if (isFetching) {
     return (
@@ -113,27 +110,9 @@ export const CreateNewsletter: React.FC = () => {
       {/* Form */}
       <Card title="Newsletter Details">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {!isEditMode && (
-            <div>
-              <Input
-                label="Slug"
-                placeholder="e.g., monthly-newsletter"
-                value={formData.slug}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    slug: e.target.value.toLowerCase().replace(/\s+/g, "-"),
-                  })
-                }
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">URL-friendly identifier (auto-formatted)</p>
-            </div>
-          )}
-
           <Input
             label="Title"
-            placeholder="e.g., Monthly Newsletter"
+            placeholder="e.g., Weekly Product Updates"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
@@ -155,9 +134,14 @@ export const CreateNewsletter: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <label className="text-sm font-medium text-gray-700">
-              Newsletter Status
-            </label>
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Newsletter Status
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                Only active newsletters can be published
+              </p>
+            </div>
             <ToggleSwitch
               checked={formData.isActive}
               onChange={(checked) =>

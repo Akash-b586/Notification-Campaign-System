@@ -93,15 +93,10 @@ export const NewsletterList: React.FC = () => {
       render: (newsletter: Newsletter) => (
         <div>
           <h3 className="font-semibold text-gray-900">{newsletter.title}</h3>
-          <p className="text-sm text-gray-600">{newsletter.slug}</p>
+          {newsletter.description && (
+            <p className="text-sm text-gray-600 mt-1">{newsletter.description}</p>
+          )}
         </div>
-      ),
-    },
-    {
-      key: "description",
-      header: "Description",
-      render: (newsletter: Newsletter) => (
-        <span className="text-gray-600">{newsletter.description || "-"}</span>
       ),
     },
     {

@@ -3,24 +3,23 @@ import { scheduleNewsletterPublish } from "../utils/scheduleSend";
 
 export const createNewsletter = async (req: any, res: any) => {
   try {
-    const { slug, title, description, isActive } = req.body;
+    const { title, description, isActive } = req.body;
 
-    if (!slug || !title) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
     }
 
-    // Check if slug already exists
+    // Check if title already exists
     const existingNewsletter = await prisma.newsletter.findUnique({
-      where: { slug },
+      where: { title },
     });
 
     if (existingNewsletter) {
-      return res.status(400).json({ message: "Newsletter with this slug already exists" });
+      return res.status(400).json({ message: "Newsletter with this title already exists" });
     }
 
     const newsletter = await prisma.newsletter.create({
       data: {
-        slug,
         title,
         description,
         isActive: isActive !== undefined ? isActive : true,

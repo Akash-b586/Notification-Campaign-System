@@ -31,11 +31,11 @@ export interface NotificationPreference {
 // Newsletter Types
 export interface Newsletter {
   id: string;
-  slug: string;
   title: string;
   description?: string;
   isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface NewsletterSubscription {

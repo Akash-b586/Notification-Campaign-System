@@ -53,6 +53,14 @@ export const signup = async (req: any, res: any) => {
         city,
         role: role || "CUSTOMER",
         isActive: true,
+        preferences: {
+          createMany: {
+            data: [
+              { notificationType: "OFFERS" },
+              { notificationType: "ORDER_UPDATES" }
+            ], 
+          },
+        },
       },
     });
 
@@ -142,7 +150,7 @@ export const logout = (req: any, res: any) => {
 };
 
 
-// const fn =async ()=>{
+// const fn = async ()=>{
 //   const hashedPassword = await hashPassword("Admin@1234");
 
 //     await prisma.user.create({
@@ -154,6 +162,14 @@ export const logout = (req: any, res: any) => {
 //         city:"Delhi",
 //         role:"ADMIN",
 //         isActive: true,
+//         preferences:{
+//           createMany: {
+//             data: [
+//               { notificationType: "OFFERS" }, 
+//               { notificationType: "ORDER_UPDATES" }
+//             ], 
+//           },
+//         }
 //       },
 //     });
 
