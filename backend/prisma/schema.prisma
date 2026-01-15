@@ -23,7 +23,6 @@ enum RoleType {
 enum NotificationType {
   OFFERS
   ORDER_UPDATES
-  NEWSLETTER
 }
 
 enum CampaignStatus {
