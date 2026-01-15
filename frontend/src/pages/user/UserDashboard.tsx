@@ -23,9 +23,21 @@ interface RecentNotification {
   channel: string;
   status: string;
   sentAt: string;
-    campaign?: {
+  campaign?: {
     campaignName: string;
     notificationType: string;
+  };
+  newsletter?: {
+    id: string;
+    title: string;
+  };
+  order?: {
+    id: string;
+    orderNumber: string;
+    product?: {
+      name: string;
+      price: number;
+    };
   };
 }
 
@@ -52,7 +64,9 @@ export const UserDashboard: React.FC = () => {
         totalNotifications: logs.length,
         lastNotification: logs[0]
           ? {
-              title: logs[0].campaign?.campaignName || `${logs[0].newsletter.title}`,
+              title: logs[0].campaign?.campaignName || 
+                     logs[0].newsletter?.title || 
+                     (logs[0].order ? `Order #${logs[0].order.orderNumber}` : logs[0].notificationType.replace('_', ' ')),
               date: new Date(logs[0].sentAt).toLocaleDateString(),
             }
           : null,
@@ -93,16 +107,35 @@ export const UserDashboard: React.FC = () => {
     {
       key: "campaign",
       header: "Notification",
-      render: (notif: RecentNotification) => (
-        <div>
-         <div className="font-medium text-gray-900">
-            {notif.campaign?.campaignName || `${notif.notificationType} notification`}
+      render: (notif: RecentNotification) => {
+        let heading = "";
+        let details = "";
+        
+        if (notif.campaign) {
+          heading = notif.campaign.campaignName;
+          details = `${notif.notificationType.replace('_', ' ')} • ${notif.channel}`;
+        } else if (notif.newsletter) {
+          heading = notif.newsletter.title;
+          details = `Newsletter • ${notif.channel}`;
+        } else if (notif.order) {
+          heading = `Order #${notif.order.orderNumber}`;
+          if (notif.order.product) {
+            details = `${notif.order.product.name} • ₹${notif.order.product.price}`;
+          } else {
+            details = `Order Update • ${notif.channel}`;
+          }
+        } else {
+          heading = notif.notificationType.replace('_', ' ');
+          details = notif.channel;
+        }
+        
+        return (
+          <div>
+            <div className="font-medium text-gray-900">{heading}</div>
+            <div className="text-sm text-gray-500">{details}</div>
           </div>
-          <div className="text-sm text-gray-500">
-            {notif.notificationType.replace('_', ' ')} • {notif.channel}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "status",
