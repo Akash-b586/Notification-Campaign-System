@@ -19,6 +19,8 @@ export const NotificationLogs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [campaignFilter, setCampaignFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -114,6 +116,22 @@ export const NotificationLogs: React.FC = () => {
   const successCount = logs.filter((l) => l.status === 'SUCCESS').length;
   const failedCount = logs.filter((l) => l.status === 'FAILED').length;
   const successRate = logs.length > 0 ? ((successCount / logs.length) * 100).toFixed(1) : '0';
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedLogs = filteredLogs.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, campaignFilter]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const columns = [
     {
@@ -283,7 +301,73 @@ export const NotificationLogs: React.FC = () => {
       </Card>
 
       <Card>
-        <Table data={filteredLogs} columns={columns} emptyMessage="No logs found" />
+        <Table data={paginatedLogs} columns={columns} emptyMessage="No logs found" />
+        
+        {/* Pagination Controls */}
+        {filteredLogs.length > 0 && (
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-700">
+                Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+                <span className="font-medium">{Math.min(endIndex, filteredLogs.length)}</span> of{" "}
+                <span className="font-medium">{filteredLogs.length}</span> logs
+              </span>
+              <Select
+                options={[
+                  { value: "10", label: "10 per page" },
+                  { value: "25", label: "25 per page" },
+                  { value: "50", label: "50 per page" },
+                  { value: "100", label: "100 per page" },
+                ]}
+                value={itemsPerPage.toString()}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((page) => {
+                  return (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  );
+                })
+                .map((page, index, array) => (
+                  <React.Fragment key={page}>
+                    {index > 0 && array[index - 1] !== page - 1 && (
+                      <span className="text-gray-400">...</span>
+                    )}
+                    <Button
+                      variant={currentPage === page ? "primary" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  </React.Fragment>
+                ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
